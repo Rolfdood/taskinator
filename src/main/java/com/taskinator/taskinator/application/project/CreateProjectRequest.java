@@ -1,11 +1,18 @@
-package com.taskinator.taskinator.application;
+package com.taskinator.taskinator.application.project;
+
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 public class CreateProjectRequest {
 
+    @NotNull
+    @NotEmpty
     private String name;
 
     private String description;
 
+    @NotNull
+    @NotEmpty
     private Long userId;
 
     public String getName() {

@@ -1,4 +1,4 @@
-package com.taskinator.taskinator.application;
+package com.taskinator.taskinator.application.project;
 
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.Task;
