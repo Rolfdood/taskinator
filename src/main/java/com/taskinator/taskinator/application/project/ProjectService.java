@@ -8,6 +8,7 @@ import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.UserRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +33,7 @@ public class ProjectService {
     }
 
     public List<ProjectDTO> findAllProjects() {
-        Long userId = getCurrentUserId();
+        UUID userId = getCurrentUserId();
 
         List<Project> projects = projectRepository.findAllByUserId(userId);
 
@@ -44,8 +45,8 @@ public class ProjectService {
         return projectDTOs;
     }
 
-    public ProjectDTO findProjectById(Long projectId) {
-        Long userId = getCurrentUserId();
+    public ProjectDTO findProjectById(UUID projectId) {
+        UUID userId = getCurrentUserId();
 
         if (projectRepository.existsByIdAndUserId(projectId, userId)) {
             return new ProjectDTO(projectRepository.findByIdAndUserId(projectId, userId));
@@ -56,7 +57,7 @@ public class ProjectService {
 
     @Transactional
     public ProjectDTO createProject(CreateProjectRequest createProjectRequest) {
-        Long userId = getCurrentUserId();
+        UUID userId = getCurrentUserId();
 
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new NotFoundException("User not found"));
@@ -71,8 +72,8 @@ public class ProjectService {
     }
 
     @Transactional
-    public ProjectDTO updateProject(Long projectId, String newName, String newDescription) {
-        Long userId = getCurrentUserId();
+    public ProjectDTO updateProject(UUID projectId, String newName, String newDescription) {
+        UUID userId = getCurrentUserId();
 
         projectValidationService.validateProjectBelongsToUser(projectId, userId);
 
@@ -86,8 +87,8 @@ public class ProjectService {
     }
 
     @Transactional
-    public void deleteProject(Long projectId) {
-        Long userId = getCurrentUserId();
+    public void deleteProject(UUID projectId) {
+        UUID userId = getCurrentUserId();
 
         projectValidationService.validateProjectBelongsToUser(projectId, userId);
 
@@ -100,7 +101,7 @@ public class ProjectService {
      *   return ((YourUserDetails) SecurityContextHolder.getContext()
      *       .getAuthentication().getPrincipal()).getId();
      */
-    private Long getCurrentUserId() {
+    private UUID getCurrentUserId() {
         throw new UnsupportedOperationException("Current user resolver not yet implemented");
     }
 }

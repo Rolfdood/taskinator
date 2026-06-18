@@ -11,5 +11,19 @@ services:
     volumes:
       - taskinator_pgdata:/var/lib/postgresql/data
 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taskinator-backend
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${BACKEND_PORT}:8080"
+    depends_on:
+      - postgres
+
 volumes:
   taskinator_pgdata:

@@ -5,9 +5,10 @@ import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.Task;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public class TaskDTO {
-    Long id;
+    UUID id;
 
     String title;
 
@@ -31,11 +32,11 @@ public class TaskDTO {
         this.project = task.getProject();
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

@@ -3,14 +3,16 @@ package com.taskinator.taskinator.domain.entity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "projects")
 public class Project {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(updatable = false, nullable = false)
+    private UUID id;
 
     @Column(nullable = false)
     private String name;
@@ -36,7 +38,7 @@ public class Project {
 
     protected Project() {}
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
