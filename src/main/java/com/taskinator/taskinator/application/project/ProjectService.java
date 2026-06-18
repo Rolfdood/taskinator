@@ -1,5 +1,6 @@
 package com.taskinator.taskinator.application.project;
 
+import com.taskinator.taskinator.application.ProjectValidationService;
 import com.taskinator.taskinator.application.exception.NotFoundException;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.User;
@@ -10,28 +11,30 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * TO DO: Validate the currently logged-in user before using services.
- *  - Only show the currently logged-in user's project.
- *  - Projects of other users cannot be seen by the logged-in user.
- *
- */
-
 @Service
 public class ProjectService {
-
+    /**
+     * TODO: Validate the currently logged-in user before using services.
+     *  - Only show the currently logged-in user's project.
+     *  - Projects of other users cannot be seen by the logged-in user.
+     *
+     */
     private final ProjectRepository projectRepository;
 
     private final UserRepository userRepository;
 
-    public ProjectService(ProjectRepository projectRepository, UserRepository userRepository) {
+    private final ProjectValidationService projectValidationService;
+
+    public ProjectService(ProjectRepository projectRepository, UserRepository userRepository,
+        ProjectValidationService projectValidationService) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
+        this.projectValidationService = projectValidationService;
     }
 
-    public List<ProjectDTO> findAllProjects() {
+    public List<ProjectDTO> findAllProjects(Long userId) {
 
-        List<Project> projects = projectRepository.findAll();
+        List<Project> projects = projectRepository.findAllByUserId(userId);
 
         List<ProjectDTO> projectDTOs = new ArrayList<>();
         for (Project project : projects) {
@@ -39,12 +42,11 @@ public class ProjectService {
         }
 
         return projectDTOs;
-
     }
 
-    public ProjectDTO findProjectById(Long projectId) {
-        if (projectRepository.findById(projectId).isPresent()) {
-            return new ProjectDTO(projectRepository.findById(projectId).get());
+    public ProjectDTO findProjectById(Long projectId, Long userId) {
+        if (projectRepository.existsByIdAndUserId(projectId, userId)) {
+            return new ProjectDTO(projectRepository.findByIdAndUserId(projectId, userId));
         } else {
             throw new NotFoundException("Project not found");
         }
@@ -71,26 +73,22 @@ public class ProjectService {
     }
 
     @Transactional
-    public ProjectDTO updateProject(Long projectId, String newName, String newDescription) {
+    public ProjectDTO updateProject(Long userId, Long projectId, String newName, String newDescription) {
+        projectValidationService.validateProjectBelongsToUser(projectId, userId);
 
-        if (projectRepository.findById(projectId).isPresent()) {
-            Project project = projectRepository.findById(projectId).get();
-            project.setName(newName);
-            project.setDescription(newDescription);
-            projectRepository.save(project);
-            return new ProjectDTO(project);
-        } else {
-            throw new NotFoundException("Project not found");
-        }
+        Project project = projectRepository.findByIdAndUserId(projectId, userId);
 
+        project.setName(newName);
+        project.setDescription(newDescription);
+        projectRepository.save(project);
+
+        return new ProjectDTO(project);
     }
 
     @Transactional
-    public void deleteProject(Long projectId) {
-        if (projectRepository.findById(projectId).isPresent()) {
-            projectRepository.deleteById(projectId);
-        } else {
-            throw new NotFoundException("Project not found");
-        }
+    public void deleteProject(Long userId, Long projectId) {
+        projectValidationService.validateProjectBelongsToUser(projectId, userId);
+
+        projectRepository.deleteById(projectId);
     }
 }

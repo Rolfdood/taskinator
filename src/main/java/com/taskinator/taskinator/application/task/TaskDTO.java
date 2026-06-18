@@ -5,6 +5,7 @@ import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.Task;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 public class TaskDTO {
     Long id;

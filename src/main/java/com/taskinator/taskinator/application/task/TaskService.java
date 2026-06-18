@@ -1,5 +1,6 @@
 package com.taskinator.taskinator.application.task;
 
+import com.taskinator.taskinator.application.ProjectValidationService;
 import com.taskinator.taskinator.application.exception.NotFoundException;
 import com.taskinator.taskinator.domain.TaskStatus;
 import com.taskinator.taskinator.domain.entity.Project;
@@ -15,17 +16,28 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class TaskService {
 
+    /**
+     * TODO:
+     *  - Revise methods for proper parameters and return types. (DTOs, records, and primitive types)
+     *  - Implement Service Layer Validation
+     */
+
     private final TaskRepository taskRepository;
+
     private final ProjectRepository projectRepository;
 
-    public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository) {
+    private final ProjectValidationService projectValidationService;
+
+    public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository,
+        ProjectValidationService projectValidationService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
+        this.projectValidationService = projectValidationService;
     }
 
-    public List<TaskDTO> findAll() {
+    public List<TaskDTO> findAllTasksInProject(Long projectId) {
 
-        List<Task> tasks = taskRepository.findAll();
+        List<Task> tasks = taskRepository.findAllByProjectId(projectId);
 
         List<TaskDTO> taskDTOList = new ArrayList<>();
 
@@ -36,20 +48,15 @@ public class TaskService {
         return taskDTOList;
     }
 
-    public TaskDTO findTaskById(Long taskId) {
-        if(taskRepository.findById(taskId).isPresent()) {
-            return new TaskDTO(taskRepository.findById(taskId).get());
-        } else {
-            throw new NotFoundException("Task not found");
-        }
+    public TaskDTO findTaskById(Long taskId, Long projectId) {
+        projectValidationService.validateTaskBelongsToProject(taskId, projectId);
+
+        return new TaskDTO(taskRepository.findById(taskId).get());
     }
 
     public List<TaskDTO> findAllByProjectId(Long projectId) {
-
         if(projectRepository.findById(projectId).isPresent()) {
-            Project project = projectRepository.findById(projectId).get();
-
-            List<Task> tasks = project.getTasks();
+            List<Task> tasks = taskRepository.findAllByProjectId(projectId);
 
             List<TaskDTO> taskDTOList = new ArrayList<>();
 
@@ -85,27 +92,16 @@ public class TaskService {
     public TaskDTO updateTask(Long projectId, Long taskId, String title, String description, LocalDate dueDate,
         TaskStatus status) {
         if(projectRepository.findById(projectId).isPresent()) {
-            Project project = projectRepository.findById(projectId).get();
+            projectValidationService.validateTaskBelongsToProject(taskId, projectId);
 
-            if(taskRepository.findById(taskId).isPresent()) {
-                Task task = taskRepository.findById(taskId).get();
-                if(project.getTasks().contains(task)) {
-                    task.setTitle(title);
-                    task.setDescription(description);
-                    task.setDueDate(dueDate);
-                    task.setStatus(status);
+            Task task = taskRepository.findById(taskId).get();
+            task.setTitle(title);
+            task.setDescription(description);
+            task.setDueDate(dueDate);
+            task.setStatus(status);
 
-                    taskRepository.save(task);
-                    return new TaskDTO(task);
-
-                } else {
-                    throw new NotFoundException("Task not found in Project.");
-                }
-
-            } else {
-                throw new NotFoundException("Task not found.");
-            }
-
+            taskRepository.save(task);
+            return new TaskDTO(task);
         } else {
             throw new NotFoundException("Project not found");
         }
@@ -116,14 +112,14 @@ public class TaskService {
         if(projectRepository.findById(projectId).isPresent()) {
             Project project = projectRepository.findById(projectId).get();
 
-            if(taskRepository.findById(taskId).isPresent()) {
-                Task task = taskRepository.findById(taskId).get();
+            projectValidationService.validateTaskBelongsToProject(taskId, projectId);
 
-                if(project.getTasks().contains(task)) {
-                    project.getTasks().remove(task);
-                    taskRepository.delete(task);
-                }
-            }
+            Task task = taskRepository.findById(taskId).get();
+
+            project.getTasks().remove(task);
+            taskRepository.delete(task);
+        } else {
+            throw new NotFoundException("Project not found");
         }
     }
 
