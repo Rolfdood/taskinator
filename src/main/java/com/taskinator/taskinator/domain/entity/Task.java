@@ -4,6 +4,7 @@ import com.taskinator.taskinator.domain.TaskStatus;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
@@ -11,8 +12,9 @@ import org.hibernate.annotations.CreationTimestamp;
 public class Task {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(updatable = false, nullable = false)
+    private UUID id;
 
     @Column(nullable = false)
     private String title;
@@ -45,7 +47,7 @@ public class Task {
 
     protected Task() {}
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 

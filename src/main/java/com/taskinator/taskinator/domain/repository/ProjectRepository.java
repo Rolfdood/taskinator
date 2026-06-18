@@ -2,13 +2,14 @@ package com.taskinator.taskinator.domain.repository;
 
 import com.taskinator.taskinator.domain.entity.Project;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface ProjectRepository extends JpaRepository<Project, Long> {
+public interface ProjectRepository extends JpaRepository<Project, UUID> {
 
-    boolean existsByIdAndUserId(Long id, Long userId);
+    List<Project> findAllByUserId(UUID userId);
 
-    Project findByIdAndUserId(Long projectId, Long userId);
+    boolean existsByIdAndUserId(UUID id, UUID userId);
 
-    List<Project> findAllByUserId(Long userId);
+    Project findByIdAndUserId(UUID id, UUID userId);
 }

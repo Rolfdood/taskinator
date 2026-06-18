@@ -3,6 +3,7 @@ package com.taskinator.taskinator.application;
 import com.taskinator.taskinator.application.exception.NotFoundException;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.TaskRepository;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -17,21 +18,21 @@ public class ProjectValidationService {
         this.taskRepository = taskRepository;
     }
 
-    public void validateTaskBelongsToProject(Long taskId, Long projectId) {
+    public void validateTaskBelongsToProject(UUID taskId, UUID projectId) {
         boolean exists = taskRepository.existsByIdAndProjectId(taskId, projectId);
         if (!exists) {
             throw new NotFoundException("Task not found in project.");
         }
     }
 
-    public void validateProjectBelongsToUser(Long projectId, Long userId) {
+    public void validateProjectBelongsToUser(UUID projectId, UUID userId) {
         boolean exists = projectRepository.existsByIdAndUserId(projectId, userId);
         if (!exists) {
             throw new NotFoundException("Project not found for user.");
         }
     }
 
-    public void validateTaskOwnership(Long taskId, Long projectId, Long userId) {
+    public void validateTaskOwnership(UUID taskId, UUID projectId, UUID userId) {
         validateProjectBelongsToUser(projectId, userId);
         validateTaskBelongsToProject(taskId, projectId);
     }

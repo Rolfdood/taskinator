@@ -8,6 +8,7 @@ import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.TaskRepository;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +35,7 @@ public class TaskService {
         this.projectValidationService = projectValidationService;
     }
 
-    public List<TaskDTO> findAllTasksInProject(Long projectId) {
+    public List<TaskDTO> findAllTasksInProject(UUID projectId) {
         projectRepository.findById(projectId)
             .orElseThrow(() -> new NotFoundException("Project not found"));
 
@@ -48,7 +49,7 @@ public class TaskService {
         return taskDTOList;
     }
 
-    public TaskDTO findTaskById(Long projectId, Long taskId) {
+    public TaskDTO findTaskById(UUID projectId, UUID taskId) {
         projectRepository.findById(projectId)
             .orElseThrow(() -> new NotFoundException("Project not found"));
 
@@ -59,7 +60,7 @@ public class TaskService {
     }
 
     @Transactional
-    public TaskDTO createTask(Long projectId, CreateTaskRequest createTaskRequest) {
+    public TaskDTO createTask(UUID projectId, CreateTaskRequest createTaskRequest) {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new NotFoundException("Project not found"));
 
@@ -79,7 +80,7 @@ public class TaskService {
     }
 
     @Transactional
-    public TaskDTO updateTask(Long projectId, Long taskId, UpdateTaskRequest updateTaskRequest) {
+    public TaskDTO updateTask(UUID projectId, UUID taskId, UpdateTaskRequest updateTaskRequest) {
         projectRepository.findById(projectId)
             .orElseThrow(() -> new NotFoundException("Project not found"));
 
@@ -99,7 +100,7 @@ public class TaskService {
     }
 
     @Transactional
-    public void deleteTask(Long projectId, Long taskId) {
+    public void deleteTask(UUID projectId, UUID taskId) {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new NotFoundException("Project not found"));
 
