@@ -14,10 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ProjectService {
     /**
-     * TODO: Validate the currently logged-in user before using services.
-     *  - Only show the currently logged-in user's project.
-     *  - Projects of other users cannot be seen by the logged-in user.
-     *
+     * TODO: Replace getCurrentUserId() with a proper currently-logged-in user resolver.
+     *  - Wire getCurrentUserId() to Spring Security's SecurityContextHolder or a dedicated
+     *    CurrentUserResolver component once authentication is in place.
      */
     private final ProjectRepository projectRepository;
 
@@ -32,7 +31,8 @@ public class ProjectService {
         this.projectValidationService = projectValidationService;
     }
 
-    public List<ProjectDTO> findAllProjects(Long userId) {
+    public List<ProjectDTO> findAllProjects() {
+        Long userId = getCurrentUserId();
 
         List<Project> projects = projectRepository.findAllByUserId(userId);
 
@@ -44,7 +44,9 @@ public class ProjectService {
         return projectDTOs;
     }
 
-    public ProjectDTO findProjectById(Long projectId, Long userId) {
+    public ProjectDTO findProjectById(Long projectId) {
+        Long userId = getCurrentUserId();
+
         if (projectRepository.existsByIdAndUserId(projectId, userId)) {
             return new ProjectDTO(projectRepository.findByIdAndUserId(projectId, userId));
         } else {
@@ -54,26 +56,24 @@ public class ProjectService {
 
     @Transactional
     public ProjectDTO createProject(CreateProjectRequest createProjectRequest) {
+        Long userId = getCurrentUserId();
 
-        if (userRepository.findById(createProjectRequest.getUserId()).isPresent()) {
-            User user = userRepository.findById(createProjectRequest.getUserId()).get();
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("User not found"));
 
-            Project newProject = new Project(
-                createProjectRequest.getName(), createProjectRequest.getDescription(), user
-            );
+        Project newProject = new Project(
+            createProjectRequest.getName(), createProjectRequest.getDescription(), user
+        );
 
-            projectRepository.save(newProject);
+        projectRepository.save(newProject);
 
-            return new ProjectDTO(newProject);
-
-        } else {
-            throw new NotFoundException("User not found");
-        }
-
+        return new ProjectDTO(newProject);
     }
 
     @Transactional
-    public ProjectDTO updateProject(Long userId, Long projectId, String newName, String newDescription) {
+    public ProjectDTO updateProject(Long projectId, String newName, String newDescription) {
+        Long userId = getCurrentUserId();
+
         projectValidationService.validateProjectBelongsToUser(projectId, userId);
 
         Project project = projectRepository.findByIdAndUserId(projectId, userId);
@@ -86,9 +86,21 @@ public class ProjectService {
     }
 
     @Transactional
-    public void deleteProject(Long userId, Long projectId) {
+    public void deleteProject(Long projectId) {
+        Long userId = getCurrentUserId();
+
         projectValidationService.validateProjectBelongsToUser(projectId, userId);
 
         projectRepository.deleteById(projectId);
+    }
+
+    /**
+     * Placeholder for the currently logged-in user resolver.
+     * TODO: Replace with Spring Security context lookup, e.g.:
+     *   return ((YourUserDetails) SecurityContextHolder.getContext()
+     *       .getAuthentication().getPrincipal()).getId();
+     */
+    private Long getCurrentUserId() {
+        throw new UnsupportedOperationException("Current user resolver not yet implemented");
     }
 }

@@ -2,12 +2,10 @@ package com.taskinator.taskinator.application.task;
 
 import com.taskinator.taskinator.application.ProjectValidationService;
 import com.taskinator.taskinator.application.exception.NotFoundException;
-import com.taskinator.taskinator.domain.TaskStatus;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.Task;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.TaskRepository;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -17,9 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class TaskService {
 
     /**
-     * TODO:
-     *  - Revise methods for proper parameters and return types. (DTOs, records, and primitive types)
-     *  - Implement Service Layer Validation
+     * TODO: Add ownership validation once the currently logged-in user resolver is implemented.
+     *  - Before any operation, verify the projectId belongs to the currently logged-in user via
+     *    ProjectValidationService.validateProjectBelongsToUser(projectId, getCurrentUserId()).
+     *  - This prevents users from accessing or mutating tasks in projects they don't own.
      */
 
     private final TaskRepository taskRepository;
@@ -36,91 +35,81 @@ public class TaskService {
     }
 
     public List<TaskDTO> findAllTasksInProject(Long projectId) {
+        projectRepository.findById(projectId)
+            .orElseThrow(() -> new NotFoundException("Project not found"));
 
         List<Task> tasks = taskRepository.findAllByProjectId(projectId);
 
         List<TaskDTO> taskDTOList = new ArrayList<>();
-
-        for(Task task : tasks) {
+        for (Task task : tasks) {
             taskDTOList.add(new TaskDTO(task));
         }
 
         return taskDTOList;
     }
 
-    public TaskDTO findTaskById(Long taskId, Long projectId) {
+    public TaskDTO findTaskById(Long projectId, Long taskId) {
+        projectRepository.findById(projectId)
+            .orElseThrow(() -> new NotFoundException("Project not found"));
+
         projectValidationService.validateTaskBelongsToProject(taskId, projectId);
 
-        return new TaskDTO(taskRepository.findById(taskId).get());
-    }
-
-    public List<TaskDTO> findAllByProjectId(Long projectId) {
-        if(projectRepository.findById(projectId).isPresent()) {
-            List<Task> tasks = taskRepository.findAllByProjectId(projectId);
-
-            List<TaskDTO> taskDTOList = new ArrayList<>();
-
-            for(Task task : tasks) {
-                taskDTOList.add(new TaskDTO(task));
-            }
-
-            return taskDTOList;
-        } else {
-            throw new NotFoundException("Project not found");
-        }
+        return new TaskDTO(taskRepository.findById(taskId)
+            .orElseThrow(() -> new NotFoundException("Task not found")));
     }
 
     @Transactional
-    public TaskDTO createTask(Long projectId, String title, String description, LocalDate dueDate, TaskStatus status) {
-        if(projectRepository.findById(projectId).isPresent()) {
-            Project project = projectRepository.findById(projectId).get();
+    public TaskDTO createTask(Long projectId, CreateTaskRequest createTaskRequest) {
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new NotFoundException("Project not found"));
 
-            Task newTask = new Task(title, description, status, dueDate, project);
+        Task newTask = new Task(
+            createTaskRequest.getTitle(),
+            createTaskRequest.getDescription(),
+            createTaskRequest.getStatus(),
+            createTaskRequest.getDueDate(),
+            project
+        );
 
-            project.getTasks().add(newTask);
+        project.getTasks().add(newTask);
+        taskRepository.save(newTask);
+        projectRepository.save(project);
 
-            taskRepository.save(newTask);
-            projectRepository.save(project);
-
-            return new TaskDTO(newTask);
-        } else {
-            throw new NotFoundException("Project not found");
-        }
+        return new TaskDTO(newTask);
     }
 
     @Transactional
-    public TaskDTO updateTask(Long projectId, Long taskId, String title, String description, LocalDate dueDate,
-        TaskStatus status) {
-        if(projectRepository.findById(projectId).isPresent()) {
-            projectValidationService.validateTaskBelongsToProject(taskId, projectId);
+    public TaskDTO updateTask(Long projectId, Long taskId, UpdateTaskRequest updateTaskRequest) {
+        projectRepository.findById(projectId)
+            .orElseThrow(() -> new NotFoundException("Project not found"));
 
-            Task task = taskRepository.findById(taskId).get();
-            task.setTitle(title);
-            task.setDescription(description);
-            task.setDueDate(dueDate);
-            task.setStatus(status);
+        projectValidationService.validateTaskBelongsToProject(taskId, projectId);
 
-            taskRepository.save(task);
-            return new TaskDTO(task);
-        } else {
-            throw new NotFoundException("Project not found");
-        }
+        Task task = taskRepository.findById(taskId)
+            .orElseThrow(() -> new NotFoundException("Task not found"));
+
+        task.setTitle(updateTaskRequest.getTitle());
+        task.setDescription(updateTaskRequest.getDescription());
+        task.setDueDate(updateTaskRequest.getDueDate());
+        task.setStatus(updateTaskRequest.getStatus());
+
+        taskRepository.save(task);
+
+        return new TaskDTO(task);
     }
 
     @Transactional
     public void deleteTask(Long projectId, Long taskId) {
-        if(projectRepository.findById(projectId).isPresent()) {
-            Project project = projectRepository.findById(projectId).get();
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new NotFoundException("Project not found"));
 
-            projectValidationService.validateTaskBelongsToProject(taskId, projectId);
+        projectValidationService.validateTaskBelongsToProject(taskId, projectId);
 
-            Task task = taskRepository.findById(taskId).get();
+        Task task = taskRepository.findById(taskId)
+            .orElseThrow(() -> new NotFoundException("Task not found"));
 
-            project.getTasks().remove(task);
-            taskRepository.delete(task);
-        } else {
-            throw new NotFoundException("Project not found");
-        }
+        project.getTasks().remove(task);
+        taskRepository.delete(task);
     }
 
 }
