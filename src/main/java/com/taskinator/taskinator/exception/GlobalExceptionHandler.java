@@ -1,4 +1,4 @@
-package com.taskinator.taskinator.application.exception;
+package com.taskinator.taskinator.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -15,6 +15,36 @@ public class GlobalExceptionHandler {
             ex.getMessage()
         );
         problem.setTitle("Resource Not Found");
+        return problem;
+    }
+
+    @ExceptionHandler(EmailAlreadyExistsException.class)
+    public ProblemDetail handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.CONFLICT,
+            ex.getMessage()
+        );
+        problem.setTitle("Email Already Registered");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ProblemDetail handleInvalidCredentials(InvalidCredentialsException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNAUTHORIZED,
+            ex.getMessage()
+        );
+        problem.setTitle("Authentication Failed");
+        return problem;
+    }
+
+    @ExceptionHandler(TokenRefreshException.class)
+    public ProblemDetail handleTokenRefresh(TokenRefreshException ex) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(
+            HttpStatus.UNAUTHORIZED,
+            ex.getMessage()
+        );
+        problem.setTitle("Token Refresh Failed");
         return problem;
     }
 

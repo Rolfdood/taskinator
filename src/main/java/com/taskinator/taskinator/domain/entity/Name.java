@@ -25,6 +25,11 @@ public class Name {
         this.suffix = suffix;
     }
 
+    public Name(String firstName, String lastName) {
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
+
     public String getFullName() {
         StringBuilder sb = new StringBuilder();
         sb.append(firstName);
