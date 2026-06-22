@@ -1,4 +1,4 @@
-package com.taskinator.taskinator.application.task;
+package com.taskinator.taskinator.web.dto;
 
 import com.taskinator.taskinator.domain.TaskStatus;
 import jakarta.validation.constraints.NotEmpty;

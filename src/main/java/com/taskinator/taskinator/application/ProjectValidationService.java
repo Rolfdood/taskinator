@@ -1,6 +1,6 @@
 package com.taskinator.taskinator.application;
 
-import com.taskinator.taskinator.application.exception.NotFoundException;
+import com.taskinator.taskinator.exception.NotFoundException;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.TaskRepository;
 import java.util.UUID;

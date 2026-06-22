@@ -1,11 +1,13 @@
 package com.taskinator.taskinator.application.task;
 
 import com.taskinator.taskinator.application.ProjectValidationService;
-import com.taskinator.taskinator.application.exception.NotFoundException;
+import com.taskinator.taskinator.exception.NotFoundException;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.Task;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.TaskRepository;
+import com.taskinator.taskinator.web.dto.CreateTaskRequest;
+import com.taskinator.taskinator.web.dto.UpdateTaskRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;

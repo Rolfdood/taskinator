@@ -1,4 +1,4 @@
-package com.taskinator.taskinator.application.exception;
+package com.taskinator.taskinator.exception;
 
 public class NotFoundException extends RuntimeException {
 
