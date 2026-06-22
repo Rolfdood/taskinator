@@ -12,6 +12,11 @@ public class UserDTO {
         this.email = email;
     }
 
+    public UserDTO(String firstName, String middleName, String lastName, String suffix, String email) {
+        this.name = new Name(firstName, middleName, lastName, suffix);
+        this.email = email;
+    }
+
     public Name getName() {
         return name;
     }

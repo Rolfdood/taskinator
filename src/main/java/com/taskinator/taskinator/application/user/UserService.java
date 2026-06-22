@@ -1,9 +1,14 @@
 package com.taskinator.taskinator.application.user;
 
+import com.taskinator.taskinator.application.auth.RefreshTokenService;
 import com.taskinator.taskinator.common.validation.ValidationPatterns;
+import com.taskinator.taskinator.domain.entity.Name;
 import com.taskinator.taskinator.domain.entity.User;
 import com.taskinator.taskinator.domain.repository.UserRepository;
-import java.util.NoSuchElementException;
+import com.taskinator.taskinator.exception.EmailAlreadyExistsException;
+import com.taskinator.taskinator.exception.InvalidCredentialsException;
+import com.taskinator.taskinator.exception.NotFoundException;
+import com.taskinator.taskinator.infrastructure.security.CurrentUserDetails;
 import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -11,56 +16,45 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UserService {
+
     private final UserRepository userRepository;
+
+    private final RefreshTokenService refreshTokenService;
 
     private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, RefreshTokenService refreshTokenService, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.refreshTokenService = refreshTokenService;
         this.passwordEncoder = passwordEncoder;
     }
 
-    public UserDTO getCurrentUserInfo() {
-        UUID uuid = getCurrentUserId();
-
-        if (userRepository.existsById(uuid)) {
-            User user = userRepository.findById(uuid).get();
-
-            return new UserDTO(user.getName(), user.getEmail());
-        } else {
-            throw new NoSuchElementException("User not found");
-        }
+    public UserDTO getCurrentUserInfo(CurrentUserDetails user) {
+        return new UserDTO(user.firstName(), user.middleName(), user.lastName(), user.suffix(), user.email());
     }
 
     @Transactional
-    public UserDTO changeUserEmail(String email) {
-        UUID uuid = getCurrentUserId();
-
-        if (userRepository.existsById(uuid)) {
-            User user = userRepository.findById(uuid).get();
-            user.setEmail(email);
-            userRepository.save(user);
-            return new UserDTO(user.getName(), user.getEmail());
-        } else {
-            throw new NoSuchElementException("User not found");
+    public UserDTO changeUserEmail(CurrentUserDetails currentUserDetails, String newEmail) {
+        if (currentUserDetails.email().equalsIgnoreCase(newEmail)) {
+            throw new IllegalArgumentException("New email must be different from your current email");
         }
+
+        if (userRepository.existsByEmail(newEmail)) {
+            throw new EmailAlreadyExistsException("An account with this email already exists");
+        }
+
+        User user = findUser(currentUserDetails.id());
+        user.setEmail(newEmail);
+        userRepository.save(user);
+
+        return new UserDTO(user.getName(), user.getEmail());
     }
 
     @Transactional
-    public UserDTO changeUserPassword(String oldPassword, String newPassword) {
-        UUID uuid = getCurrentUserId();
-
-        User user = userRepository.findById(uuid)
-            .orElseThrow(() -> new NoSuchElementException("User not found"));
-
-        if (!passwordEncoder.matches(oldPassword, user.getPasswordHash())) {
-            throw new IllegalArgumentException("Current password is incorrect");
-        }
-
-        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
-            throw new IllegalArgumentException(
-                "New password must be different from the current password");
-        }
+    public UserDTO changeUserPassword(
+        CurrentUserDetails currentUserDetails,
+        String currentPassword,
+        String newPassword) {
 
         if (!ValidationPatterns.PASSWORD.matcher(newPassword).matches()) {
             throw new IllegalArgumentException(
@@ -68,14 +62,26 @@ public class UserService {
             );
         }
 
-        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        User user = findUser(currentUserDetails.id());
 
+        if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
+            throw new InvalidCredentialsException("Current password is incorrect");
+        }
+
+        if (passwordEncoder.matches(newPassword, user.getPasswordHash())) {
+            throw new IllegalArgumentException("New password must be different from the current password");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+
+        refreshTokenService.revokeAllForUser(user.getId());
 
         return new UserDTO(user.getName(), user.getEmail());
     }
 
-    private UUID getCurrentUserId() {
-        throw new UnsupportedOperationException("Current user resolver not yet implemented");
+    private User findUser (UUID id) {
+        return userRepository.findById(id).orElseThrow(() -> new NotFoundException("User not found"));
     }
+
 }
