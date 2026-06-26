@@ -6,7 +6,9 @@ import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.User;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.UserRepository;
+import com.taskinator.taskinator.infrastructure.security.CurrentUserDetails;
 import com.taskinator.taskinator.web.dto.CreateProjectRequest;
+import com.taskinator.taskinator.web.dto.UpdateProjectRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -15,11 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ProjectService {
-    /**
-     * TODO: Replace getCurrentUserId() with a proper currently-logged-in user resolver.
-     *  - Wire getCurrentUserId() to Spring Security's SecurityContextHolder or a dedicated
-     *    CurrentUserResolver component once authentication is in place.
-     */
+
     private final ProjectRepository projectRepository;
 
     private final UserRepository userRepository;
@@ -33,10 +31,9 @@ public class ProjectService {
         this.projectValidationService = projectValidationService;
     }
 
-    public List<ProjectDTO> findAllProjects() {
-        UUID userId = getCurrentUserId();
+    public List<ProjectDTO> findAllProjects(CurrentUserDetails  currentUserDetails) {
 
-        List<Project> projects = projectRepository.findAllByUserId(userId);
+        List<Project> projects = projectRepository.findAllByUserId(currentUserDetails.id());
 
         List<ProjectDTO> projectDTOs = new ArrayList<>();
         for (Project project : projects) {
@@ -46,25 +43,14 @@ public class ProjectService {
         return projectDTOs;
     }
 
-    public ProjectDTO findProjectById(UUID projectId) {
-        UUID userId = getCurrentUserId();
-
-        if (projectRepository.existsByIdAndUserId(projectId, userId)) {
-            return new ProjectDTO(projectRepository.findByIdAndUserId(projectId, userId));
-        } else {
-            throw new NotFoundException("Project not found");
-        }
-    }
-
     @Transactional
-    public ProjectDTO createProject(CreateProjectRequest createProjectRequest) {
-        UUID userId = getCurrentUserId();
+    public ProjectDTO createProject(CurrentUserDetails  currentUserDetails, CreateProjectRequest createProjectRequest) {
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(currentUserDetails.id())
             .orElseThrow(() -> new NotFoundException("User not found"));
 
         Project newProject = new Project(
-            createProjectRequest.getName(), createProjectRequest.getDescription(), user
+            createProjectRequest.name(), createProjectRequest.description(), user
         );
 
         projectRepository.save(newProject);
@@ -72,37 +58,43 @@ public class ProjectService {
         return new ProjectDTO(newProject);
     }
 
+    public List<ProjectDTO> findProjectByName(String projectName, CurrentUserDetails  currentUserDetails) {
+
+        if (!projectRepository.findAllByNameAndUserId(projectName, currentUserDetails.id()).isEmpty()) {
+            List<Project> projects = projectRepository.findAllByNameAndUserId(projectName, currentUserDetails.id());
+
+            List<ProjectDTO> projectDTOs = new ArrayList<>();
+
+            for(Project project : projects) {
+                projectDTOs.add(new ProjectDTO(project));
+            }
+
+            return projectDTOs;
+        } else {
+            throw new NotFoundException("Project not found");
+        }
+    }
+
     @Transactional
-    public ProjectDTO updateProject(UUID projectId, String newName, String newDescription) {
-        UUID userId = getCurrentUserId();
+    public ProjectDTO updateProject(CurrentUserDetails  currentUserDetails, UpdateProjectRequest request) {
 
-        projectValidationService.validateProjectBelongsToUser(projectId, userId);
+        projectValidationService.validateProjectBelongsToUser(request.projectId(), currentUserDetails.id());
 
-        Project project = projectRepository.findByIdAndUserId(projectId, userId);
+        Project project = projectRepository.findByIdAndUserId(request.projectId(), currentUserDetails.id());
 
-        project.setName(newName);
-        project.setDescription(newDescription);
+        project.setName(request.name());
+        project.setDescription(request.description());
         projectRepository.save(project);
 
         return new ProjectDTO(project);
     }
 
     @Transactional
-    public void deleteProject(UUID projectId) {
-        UUID userId = getCurrentUserId();
+    public void deleteProject(CurrentUserDetails  currentUserDetails, UUID projectId) {
 
-        projectValidationService.validateProjectBelongsToUser(projectId, userId);
+        projectValidationService.validateProjectBelongsToUser(projectId, currentUserDetails.id());
 
         projectRepository.deleteById(projectId);
     }
 
-    /**
-     * Placeholder for the currently logged-in user resolver.
-     * TODO: Replace with Spring Security context lookup, e.g.:
-     *   return ((YourUserDetails) SecurityContextHolder.getContext()
-     *       .getAuthentication().getPrincipal()).getId();
-     */
-    private UUID getCurrentUserId() {
-        throw new UnsupportedOperationException("Current user resolver not yet implemented");
-    }
 }

@@ -6,6 +6,7 @@ import com.taskinator.taskinator.infrastructure.security.CurrentUser;
 import com.taskinator.taskinator.infrastructure.security.CurrentUserDetails;
 import com.taskinator.taskinator.web.dto.ChangeEmailRequest;
 import com.taskinator.taskinator.web.dto.ChangePasswordRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,13 +30,13 @@ public class UserController {
 
     @PostMapping("/email")
     public ResponseEntity<UserDTO> changeEmail(@CurrentUser CurrentUserDetails currentUserDetails,
-        ChangeEmailRequest request) {
+        @Valid ChangeEmailRequest request) {
         return ResponseEntity.ok(userService.changeUserEmail(currentUserDetails, request.newEmail()));
     }
 
     @PostMapping("/password")
     public ResponseEntity<UserDTO> changePassword(@CurrentUser CurrentUserDetails currentUserDetails,
-        ChangePasswordRequest request) {
+        @Valid ChangePasswordRequest request) {
         return ResponseEntity.ok(
             userService.changeUserPassword(currentUserDetails, request.currentPassword(),  request.newPassword())
         );
