@@ -1,76 +1,27 @@
 package com.taskinator.taskinator.application.project;
 
+import com.taskinator.taskinator.application.task.TaskDTO;
 import com.taskinator.taskinator.domain.entity.Project;
-import com.taskinator.taskinator.domain.entity.Task;
-import com.taskinator.taskinator.domain.entity.User;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class ProjectDTO {
-    private UUID id;
-
-    private String name;
-
-    private String description;
-
-    private final LocalDateTime createdAt;
-
-    private User user;
-
-    private List<Task> tasks = new ArrayList<>();
-
+public record ProjectDTO(
+    UUID id,
+    String name,
+    String description,
+    LocalDateTime createdAt,
+    UUID userId,
+    List<TaskDTO> tasks
+) {
     public ProjectDTO(Project project) {
-        this.id = project.getId();
-        this.name = project.getName();
-        this.description = project.getDescription();
-        this.createdAt = project.getCreatedAt();
-        this.user = project.getUser();
-        this.tasks = project.getTasks();
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public  LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public List<Task> getTasks() {
-        return tasks;
-    }
-
-    public void setTasks(List<Task> tasks) {
-        this.tasks = tasks;
+        this(
+            project.getId(),
+            project.getName(),
+            project.getDescription(),
+            project.getCreatedAt(),
+            project.getUser().getId(),
+            project.getTasks().stream().map(TaskDTO::new).toList()
+        );
     }
 }

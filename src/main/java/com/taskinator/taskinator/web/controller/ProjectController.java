@@ -2,20 +2,16 @@ package com.taskinator.taskinator.web.controller;
 
 import com.taskinator.taskinator.application.project.ProjectDTO;
 import com.taskinator.taskinator.application.project.ProjectService;
-import com.taskinator.taskinator.infrastructure.security.CurrentUser;
 import com.taskinator.taskinator.infrastructure.security.CurrentUserDetails;
+import com.taskinator.taskinator.infrastructure.security.CurrentUser;
 import com.taskinator.taskinator.web.dto.CreateProjectRequest;
 import com.taskinator.taskinator.web.dto.UpdateProjectRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/projects")
@@ -28,31 +24,39 @@ public class ProjectController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjectDTO>> findAllProjects(@CurrentUser CurrentUserDetails currentUserDetails) {
-        return ResponseEntity.ok(projectService.findAllProjects(currentUserDetails));
+    public ResponseEntity<List<ProjectDTO>> findAllProjects(
+        @CurrentUser CurrentUserDetails currentUser) {
+        return ResponseEntity.ok(projectService.findAllProjects(currentUser.id()));
     }
 
-    @GetMapping("{name}")
-    public ResponseEntity<List<ProjectDTO>> findProjectsByName(@CurrentUser CurrentUserDetails currentUserDetails,
-        @PathVariable String name) {
-        return ResponseEntity.ok(projectService.findProjectByName(name, currentUserDetails));
-    }
-
-    @PostMapping
-    public ResponseEntity<ProjectDTO> createProject(CurrentUserDetails currentUserDetails,
-        @Valid CreateProjectRequest request) {
-        return ResponseEntity.ok(projectService.createProject(currentUserDetails, request));
+    @GetMapping("/search")
+    public ResponseEntity<List<ProjectDTO>> findProjectsByName(
+        @RequestParam String name,
+        @CurrentUser CurrentUserDetails currentUser) {
+        return ResponseEntity.ok(projectService.findProjectsByName(name, currentUser.id()));
     }
 
     @PostMapping
-    public ResponseEntity<ProjectDTO> updateProjectDetails(CurrentUserDetails currentUserDetails,
-        @Valid UpdateProjectRequest request) {
-        return ResponseEntity.ok(projectService.updateProject(currentUserDetails, request));
+    public ResponseEntity<ProjectDTO> createProject(
+        @CurrentUser CurrentUserDetails currentUser,
+        @Valid @RequestBody CreateProjectRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(projectService.createProject(currentUser.id(), request));
     }
 
-    @DeleteMapping("{id}")
-    public void deleteProject(@CurrentUser CurrentUserDetails currentUserDetails, @PathVariable UUID id) {
-        projectService.deleteProject(currentUserDetails, id);
+    @PutMapping("/{projectId}")
+    public ResponseEntity<ProjectDTO> updateProject(
+        @PathVariable UUID projectId,
+        @CurrentUser CurrentUserDetails currentUser,
+        @Valid @RequestBody UpdateProjectRequest request) {
+        return ResponseEntity.ok(projectService.updateProject(projectId, currentUser.id(), request));
     }
 
+    @DeleteMapping("/{projectId}")
+    public ResponseEntity<Void> deleteProject(
+        @PathVariable UUID projectId,
+        @CurrentUser CurrentUserDetails currentUser) {
+        projectService.deleteProject(projectId, currentUser.id());
+        return ResponseEntity.noContent().build();
+    }
 }

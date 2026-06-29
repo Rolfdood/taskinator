@@ -1,15 +1,11 @@
 package com.taskinator.taskinator.web.dto;
 
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import java.util.UUID;
+import jakarta.validation.constraints.NotBlank;
 
 public record UpdateProjectRequest(
-    @NotNull
-    UUID projectId,
-    @NotNull
-    @NotEmpty
+    @NotBlank
     String name,
+
     String description
 ) {
 

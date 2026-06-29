@@ -6,10 +6,8 @@ import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.User;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.UserRepository;
-import com.taskinator.taskinator.infrastructure.security.CurrentUserDetails;
 import com.taskinator.taskinator.web.dto.CreateProjectRequest;
 import com.taskinator.taskinator.web.dto.UpdateProjectRequest;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
@@ -19,9 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
-
     private final UserRepository userRepository;
-
     private final ProjectValidationService projectValidationService;
 
     public ProjectService(ProjectRepository projectRepository, UserRepository userRepository,
@@ -31,56 +27,38 @@ public class ProjectService {
         this.projectValidationService = projectValidationService;
     }
 
-    public List<ProjectDTO> findAllProjects(CurrentUserDetails  currentUserDetails) {
-
-        List<Project> projects = projectRepository.findAllByUserId(currentUserDetails.id());
-
-        List<ProjectDTO> projectDTOs = new ArrayList<>();
-        for (Project project : projects) {
-            projectDTOs.add(new ProjectDTO(project));
-        }
-
-        return projectDTOs;
+    public List<ProjectDTO> findAllProjects(UUID userId) {
+        return projectRepository.findAllByUserId(userId)
+            .stream()
+            .map(ProjectDTO::new)
+            .toList();
     }
 
-    @Transactional
-    public ProjectDTO createProject(CurrentUserDetails  currentUserDetails, CreateProjectRequest createProjectRequest) {
-
-        User user = userRepository.findById(currentUserDetails.id())
-            .orElseThrow(() -> new NotFoundException("User not found"));
-
-        Project newProject = new Project(
-            createProjectRequest.name(), createProjectRequest.description(), user
-        );
-
-        projectRepository.save(newProject);
-
-        return new ProjectDTO(newProject);
-    }
-
-    public List<ProjectDTO> findProjectByName(String projectName, CurrentUserDetails  currentUserDetails) {
-
-        if (!projectRepository.findAllByNameAndUserId(projectName, currentUserDetails.id()).isEmpty()) {
-            List<Project> projects = projectRepository.findAllByNameAndUserId(projectName, currentUserDetails.id());
-
-            List<ProjectDTO> projectDTOs = new ArrayList<>();
-
-            for(Project project : projects) {
-                projectDTOs.add(new ProjectDTO(project));
-            }
-
-            return projectDTOs;
-        } else {
+    public List<ProjectDTO> findProjectsByName(String name, UUID userId) {
+        List<Project> projects = projectRepository.findAllByNameAndUserId(name, userId);
+        if (projects.isEmpty()) {
             throw new NotFoundException("Project not found");
         }
+        return projects.stream().map(ProjectDTO::new).toList();
     }
 
     @Transactional
-    public ProjectDTO updateProject(CurrentUserDetails  currentUserDetails, UpdateProjectRequest request) {
+    public ProjectDTO createProject(UUID userId, CreateProjectRequest request) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new NotFoundException("User not found"));
 
-        projectValidationService.validateProjectBelongsToUser(request.projectId(), currentUserDetails.id());
+        Project project = new Project(request.name(), request.description(), user);
+        projectRepository.save(project);
 
-        Project project = projectRepository.findByIdAndUserId(request.projectId(), currentUserDetails.id());
+        return new ProjectDTO(project);
+    }
+
+    @Transactional
+    public ProjectDTO updateProject(UUID projectId, UUID userId, UpdateProjectRequest request) {
+        projectValidationService.validateProjectBelongsToUser(projectId, userId);
+
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new NotFoundException("Project not found"));
 
         project.setName(request.name());
         project.setDescription(request.description());
@@ -90,11 +68,8 @@ public class ProjectService {
     }
 
     @Transactional
-    public void deleteProject(CurrentUserDetails  currentUserDetails, UUID projectId) {
-
-        projectValidationService.validateProjectBelongsToUser(projectId, currentUserDetails.id());
-
+    public void deleteProject(UUID projectId, UUID userId) {
+        projectValidationService.validateProjectBelongsToUser(projectId, userId);
         projectRepository.deleteById(projectId);
     }
-
 }
