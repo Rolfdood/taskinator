@@ -47,52 +47,17 @@ public class Task {
 
     protected Task() {}
 
-    public UUID getId() {
-        return id;
-    }
+    public UUID getId() { return id; }
+    public String getTitle() { return title; }
+    public String getDescription() { return description; }
+    public TaskStatus getStatus() { return status; }
+    public LocalDate getDueDate() { return dueDate; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public Project getProject() { return project; }
 
-    public String getTitle() {
-        return title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public TaskStatus getStatus() {
-        return status;
-    }
-
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public void setStatus(TaskStatus status) {
-        this.status = status;
-    }
-
-    public void setDueDate(LocalDate dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
+    public void setTitle(String title) { this.title = title; }
+    public void setDescription(String description) { this.description = description; }
+    public void setStatus(TaskStatus status) { this.status = status; }
+    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+    public void setProject(Project project) { this.project = project; }
 }
