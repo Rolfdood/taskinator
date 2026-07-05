@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public class UserPrincipal implements UserDetails {
 
-    private final User user;
+    private final transient User user;
 
     public UserPrincipal(User user) {
         this.user = user;

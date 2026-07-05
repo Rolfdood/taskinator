@@ -27,11 +27,8 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final long accessTokenExpirationMs;
 
-    public AuthService(
-        UserRepository userRepository,
-        PasswordEncoder passwordEncoder,
-        AuthenticationManager authenticationManager,
-        JwtService jwtService,
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+        AuthenticationManager authenticationManager, JwtService jwtService,
         RefreshTokenService refreshTokenService,
         @Value("${application.jwt.access-token-expiration-ms}") long accessTokenExpirationMs) {
         this.userRepository = userRepository;
