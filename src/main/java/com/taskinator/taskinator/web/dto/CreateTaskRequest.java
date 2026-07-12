@@ -1,64 +1,21 @@
 package com.taskinator.taskinator.web.dto;
 
-import com.taskinator.taskinator.domain.TaskStatus;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
-public class CreateTaskRequest {
-    @NotNull
-    @NotEmpty
-    String title;
-
-    String description;
-
-    @NotNull
-    @NotEmpty
-    TaskStatus status;
-
-    LocalDate dueDate;
-
-    @NotNull
+public record CreateTaskRequest (
     @NotBlank
-    Long projectId;
+    String title,
 
-    public String getTitle() {
-        return title;
-    }
+    String description,
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+    @NotNull
+    String status,
 
-    public String getDescription() {
-        return description;
-    }
+    LocalDateTime dueDate
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+){
 
-    public TaskStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(TaskStatus status) {
-        this.status = status;
-    }
-
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
-
-    public  void setDueDate(LocalDate dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public Long getProjectId() {
-        return projectId;
-    }
-    public void setProjectId(Long projectId) {
-        this.projectId = projectId;
-    }
 }

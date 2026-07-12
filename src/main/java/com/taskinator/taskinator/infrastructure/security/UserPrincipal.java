@@ -11,7 +11,7 @@ import java.util.UUID;
 
 public class UserPrincipal implements UserDetails {
 
-    private final User user;
+    private final transient User user;
 
     public UserPrincipal(User user) {
         this.user = user;
@@ -59,5 +59,9 @@ public class UserPrincipal implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    public CurrentUserDetails toCurrentUserDetails() {
+        return CurrentUserDetails.from(user);
     }
 }

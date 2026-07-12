@@ -3,6 +3,7 @@ package com.taskinator.taskinator.application.auth;
 import com.taskinator.taskinator.domain.entity.User;
 import com.taskinator.taskinator.domain.repository.UserRepository;
 import com.taskinator.taskinator.infrastructure.security.UserPrincipal;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,7 +21,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
-    public UserDetails loadUserByUsername(String email) {
+    public UserDetails loadUserByUsername(@NonNull String email) {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("No user found with email: " + email));
         return new UserPrincipal(user);
