@@ -24,8 +24,7 @@ public class ProjectController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ProjectDTO>> findAllProjects(
-        @CurrentUser CurrentUserDetails currentUser) {
+    public ResponseEntity<List<ProjectDTO>> findAllProjects(@CurrentUser CurrentUserDetails currentUser) {
         return ResponseEntity.ok(projectService.findAllProjects(currentUser.id()));
     }
 

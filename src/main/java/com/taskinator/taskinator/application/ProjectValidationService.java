@@ -28,7 +28,7 @@ public class ProjectValidationService {
     public void validateProjectBelongsToUser(UUID projectId, UUID userId) {
         boolean exists = projectRepository.existsByIdAndUserId(projectId, userId);
         if (!exists) {
-            throw new NotFoundException("Project not found for user.");
+            throw new NotFoundException("Project not found.");
         }
     }
 

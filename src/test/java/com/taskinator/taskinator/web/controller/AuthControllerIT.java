@@ -2,7 +2,6 @@ package com.taskinator.taskinator.web.controller;
 
 import com.github.database.rider.core.api.dataset.DataSet;
 import com.taskinator.taskinator.Datasets;
-import com.taskinator.taskinator.web.AbstractDBUnitTest;
 import com.taskinator.taskinator.web.dto.auth.LoginRequest;
 import com.taskinator.taskinator.web.dto.auth.RegisterRequest;
 import org.junit.jupiter.api.Test;
