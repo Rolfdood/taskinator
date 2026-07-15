@@ -31,6 +31,12 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Task> tasks = new ArrayList<>();
 
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProjectRole> roles = new ArrayList<>();
+
+    @OneToMany(mappedBy = "project")
+    private List<ProjectMember> members = new ArrayList<>();
+
     public Project(String name, String description, User user) {
         this.name = name;
         this.description = description;
@@ -61,6 +67,22 @@ public class Project {
 
     public List<Task> getTasks() {
         return tasks;
+    }
+
+    public List<ProjectRole> getRoles() {
+        return roles;
+    }
+
+    public List<ProjectMember> getMembers() {
+        return members;
+    }
+
+    public void setRoles(List<ProjectRole> roles) {
+        this.roles = roles;
+    }
+
+    public void setMembers(List<ProjectMember> members) {
+        this.members = members;
     }
 
     public void setName(String name) {

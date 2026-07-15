@@ -37,6 +37,10 @@ public class Task {
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to")
+    private User assignedTo;
+
     public Task(String title, String description, TaskStatus status, LocalDate dueDate, Project project) {
         this.title = title;
         this.description = description;
@@ -54,7 +58,9 @@ public class Task {
     public LocalDate getDueDate() { return dueDate; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public Project getProject() { return project; }
+    public User getAssignedTo() { return assignedTo; }
 
+    public void setAssignedTo(User assignedTo) { this.assignedTo = assignedTo; }
     public void setTitle(String title) { this.title = title; }
     public void setDescription(String description) { this.description = description; }
     public void setStatus(TaskStatus status) { this.status = status; }
