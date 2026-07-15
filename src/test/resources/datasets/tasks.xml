@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataset>
+    <users
+        id="a1b2c3d4-0000-4000-8000-000000000001"
+        email="existing.user@example.com"
+        password_hash="$2b$10$r8CXD09oLjISnHcQ78kXDOcJbzK1uUcVHnitVx6b1hLRdMpEdwIbK"
+        first_name="Jane"
+        last_name="Doe" />
+
+    <projects
+        id="b2c3d4e5-0000-4000-8000-000000000001"
+        name="Project 1"
+        description="My First Project"
+        user_id="a1b2c3d4-0000-4000-8000-000000000001" />
+
+    <tasks
+        id="c3d4e5f6-0000-4000-8000-000000000001"
+        title="Task 1"
+        description="First task"
+        status="TODO"
+        project_id="b2c3d4e5-0000-4000-8000-000000000001" />
+</dataset>

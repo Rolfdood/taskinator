@@ -1,5 +1,6 @@
 package com.taskinator.taskinator.application.task;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.taskinator.taskinator.domain.TaskStatus;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.Task;
@@ -76,6 +77,7 @@ public class TaskDTO {
         return createdAt;
     }
 
+    @JsonIgnore
     public Project getProject() {
         return project;
     }

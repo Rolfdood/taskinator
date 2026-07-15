@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -30,13 +31,13 @@ public class UserController {
 
     @PostMapping("/email")
     public ResponseEntity<UserDTO> changeEmail(@CurrentUser CurrentUserDetails currentUserDetails,
-        @Valid ChangeEmailRequest request) {
+        @Valid @RequestBody ChangeEmailRequest request) {
         return ResponseEntity.ok(userService.changeUserEmail(currentUserDetails, request.newEmail()));
     }
 
     @PostMapping("/password")
     public ResponseEntity<UserDTO> changePassword(@CurrentUser CurrentUserDetails currentUserDetails,
-        @Valid ChangePasswordRequest request) {
+        @Valid @RequestBody ChangePasswordRequest request) {
         return ResponseEntity.ok(
             userService.changeUserPassword(currentUserDetails, request.currentPassword(),  request.newPassword())
         );

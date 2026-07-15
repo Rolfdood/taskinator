@@ -23,7 +23,7 @@ public class Task {
     private String description;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(50)")
     private TaskStatus status;
 
     @Column(name = "due_date")
