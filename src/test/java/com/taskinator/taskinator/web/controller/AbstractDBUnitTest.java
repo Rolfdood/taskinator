@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import javax.sql.DataSource;
 
 @DBRider
-@DBUnit(schema = "PUBLIC")
+@DBUnit(schema = "PUBLIC", tableType = {"TABLE"})
 public abstract class AbstractDBUnitTest extends AbstractIntegrationTest {
 
     @Autowired
