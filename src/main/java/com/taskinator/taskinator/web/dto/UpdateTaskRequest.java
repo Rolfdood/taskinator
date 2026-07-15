@@ -3,6 +3,7 @@ package com.taskinator.taskinator.web.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record UpdateTaskRequest(
     @NotBlank
@@ -13,7 +14,9 @@ public record UpdateTaskRequest(
     @NotNull
     String status,
 
-    LocalDateTime dueDate
+    LocalDateTime dueDate,
+
+    UUID assignedTo
 ) {
 
 }

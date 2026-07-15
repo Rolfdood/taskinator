@@ -23,6 +23,12 @@ public class TaskDTO {
 
     Project project;
 
+    UUID assignedToId;
+
+    String assignedToName;
+
+    String assignedToEmail;
+
     public TaskDTO(Task task) {
         this.id = task.getId();
         this.title = task.getTitle();
@@ -31,6 +37,11 @@ public class TaskDTO {
         this.dueDate = task.getDueDate();
         this.createdAt = task.getCreatedAt();
         this.project = task.getProject();
+        if (task.getAssignedTo() != null) {
+            this.assignedToId = task.getAssignedTo().getId();
+            this.assignedToName = task.getAssignedTo().getName().getFullName();
+            this.assignedToEmail = task.getAssignedTo().getEmail();
+        }
     }
 
     public UUID getId() {
@@ -84,5 +95,29 @@ public class TaskDTO {
 
     public void setProject(Project project) {
         this.project = project;
+    }
+
+    public UUID getAssignedToId() {
+        return assignedToId;
+    }
+
+    public void setAssignedToId(UUID assignedToId) {
+        this.assignedToId = assignedToId;
+    }
+
+    public String getAssignedToName() {
+        return assignedToName;
+    }
+
+    public void setAssignedToName(String assignedToName) {
+        this.assignedToName = assignedToName;
+    }
+
+    public String getAssignedToEmail() {
+        return assignedToEmail;
+    }
+
+    public void setAssignedToEmail(String assignedToEmail) {
+        this.assignedToEmail = assignedToEmail;
     }
 }

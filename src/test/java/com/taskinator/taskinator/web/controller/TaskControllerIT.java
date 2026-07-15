@@ -73,7 +73,7 @@ class TaskControllerIT extends AbstractDBUnitTest {
         String token = loginAndGetAccessToken(EXISTING_EMAIL, EXISTING_PASSWORD);
         CreateTaskRequest request = new CreateTaskRequest(
             "New Task", "Task description", "TODO",
-            LocalDateTime.of(2026, 12, 31, 0, 0));
+            LocalDateTime.of(2026, 12, 31, 0, 0), null);
 
         mockMvc.perform(post("/api/v1/projects/" + SEEDED_PROJECT_ID + "/tasks")
                 .header(AUTHORIZATION, "Bearer " + token)
@@ -88,7 +88,7 @@ class TaskControllerIT extends AbstractDBUnitTest {
 
     @Test
     void createTask_shouldReturnUnauthorized_whenNotAuthenticated() throws Exception {
-        CreateTaskRequest request = new CreateTaskRequest("Task", "Desc", "TODO", null);
+        CreateTaskRequest request = new CreateTaskRequest("Task", "Desc", "TODO", null, null);
 
         mockMvc.perform(post("/api/v1/projects/" + SEEDED_PROJECT_ID + "/tasks")
                 .contentType("application/json")
@@ -100,7 +100,7 @@ class TaskControllerIT extends AbstractDBUnitTest {
     void updateTask_shouldUpdateTask_whenUserOwnsTask() throws Exception {
         String token = loginAndGetAccessToken(EXISTING_EMAIL, EXISTING_PASSWORD);
         UpdateTaskRequest request = new UpdateTaskRequest(
-            "Updated Task", "Updated description", "IN_PROGRESS", null);
+            "Updated Task", "Updated description", "IN_PROGRESS", null, null);
 
         mockMvc.perform(put("/api/v1/projects/" + SEEDED_PROJECT_ID + "/tasks/" + SEEDED_TASK_ID)
                 .header(AUTHORIZATION, "Bearer " + token)
@@ -117,7 +117,7 @@ class TaskControllerIT extends AbstractDBUnitTest {
         String otherUserToken = registerAndGetAccessToken(
             "other.user@example.com", "OtherPass123!", "Other", "User");
         UpdateTaskRequest request = new UpdateTaskRequest(
-            "Hijacked Task", "Malicious", "DONE", null);
+            "Hijacked Task", "Malicious", "DONE", null, null);
 
         mockMvc.perform(put("/api/v1/projects/" + SEEDED_PROJECT_ID + "/tasks/" + SEEDED_TASK_ID)
                 .header(AUTHORIZATION, "Bearer " + otherUserToken)

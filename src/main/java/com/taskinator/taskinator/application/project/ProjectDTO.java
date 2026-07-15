@@ -1,5 +1,7 @@
 package com.taskinator.taskinator.application.project;
 
+import com.taskinator.taskinator.application.member.ProjectMemberDTO;
+import com.taskinator.taskinator.application.role.ProjectRoleDTO;
 import com.taskinator.taskinator.application.task.TaskDTO;
 import com.taskinator.taskinator.domain.entity.Project;
 import java.time.LocalDateTime;
@@ -12,7 +14,9 @@ public record ProjectDTO(
     String description,
     LocalDateTime createdAt,
     UUID userId,
-    List<TaskDTO> tasks
+    List<TaskDTO> tasks,
+    List<ProjectRoleDTO> roles,
+    List<ProjectMemberDTO> members
 ) {
     public ProjectDTO(Project project) {
         this(
@@ -21,7 +25,9 @@ public record ProjectDTO(
             project.getDescription(),
             project.getCreatedAt(),
             project.getUser().getId(),
-            project.getTasks().stream().map(TaskDTO::new).toList()
+            project.getTasks().stream().map(TaskDTO::new).toList(),
+            project.getRoles().stream().map(ProjectRoleDTO::new).toList(),
+            project.getMembers().stream().map(ProjectMemberDTO::new).toList()
         );
     }
 }

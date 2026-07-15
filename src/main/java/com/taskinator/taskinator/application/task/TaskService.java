@@ -1,12 +1,16 @@
 package com.taskinator.taskinator.application.task;
 
 import com.taskinator.taskinator.application.ProjectValidationService;
+import com.taskinator.taskinator.domain.ProjectPermission;
 import com.taskinator.taskinator.domain.TaskStatus;
-import com.taskinator.taskinator.exception.NotFoundException;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.Task;
+import com.taskinator.taskinator.domain.entity.User;
+import com.taskinator.taskinator.domain.repository.ProjectMemberRepository;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.TaskRepository;
+import com.taskinator.taskinator.domain.repository.UserRepository;
+import com.taskinator.taskinator.exception.NotFoundException;
 import com.taskinator.taskinator.web.dto.CreateTaskRequest;
 import com.taskinator.taskinator.web.dto.UpdateTaskRequest;
 import java.util.List;
@@ -19,17 +23,25 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
+    private final UserRepository userRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final ProjectValidationService projectValidationService;
 
+    static final String TASK_NOT_FOUND = "Task not found";
+
     public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository,
+        UserRepository userRepository,
+        ProjectMemberRepository projectMemberRepository,
         ProjectValidationService projectValidationService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
+        this.userRepository = userRepository;
+        this.projectMemberRepository = projectMemberRepository;
         this.projectValidationService = projectValidationService;
     }
 
     public List<TaskDTO> findAllByProject(UUID projectId, UUID userId) {
-        projectValidationService.validateProjectBelongsToUser(projectId, userId);
+        projectValidationService.validatePermission(projectId, userId, ProjectPermission.PROJECT_VIEW);
         return taskRepository.findAllByProjectId(projectId)
             .stream()
             .map(TaskDTO::new)
@@ -37,15 +49,21 @@ public class TaskService {
     }
 
     public TaskDTO findTaskById(UUID projectId, UUID taskId, UUID userId) {
-        projectValidationService.validateTaskOwnership(taskId, projectId, userId);
+        projectValidationService.validateTaskAccess(taskId, projectId, userId, ProjectPermission.PROJECT_VIEW);
         Task task = taskRepository.findById(taskId)
-            .orElseThrow(() -> new NotFoundException("Task not found"));
+            .orElseThrow(() -> new NotFoundException(TASK_NOT_FOUND));
         return new TaskDTO(task);
     }
 
     @Transactional
     public TaskDTO createTask(UUID projectId, CreateTaskRequest request, UUID userId) {
-        projectValidationService.validateProjectBelongsToUser(projectId, userId);
+        return createTask(projectId, request, userId, null);
+    }
+
+    @Transactional
+    public TaskDTO createTask(UUID projectId, CreateTaskRequest request, UUID userId, UUID assigneeId) {
+        projectValidationService.validatePermission(projectId, userId, ProjectPermission.TASK_CREATE);
+
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new NotFoundException("Project not found"));
 
@@ -57,15 +75,29 @@ public class TaskService {
             project
         );
 
+        if (assigneeId != null) {
+            User assignee = userRepository.findById(assigneeId)
+                .orElseThrow(() -> new NotFoundException("Assigned user not found"));
+
+            boolean isAssigneeMember = projectRepository.existsByIdAndUserId(projectId, assigneeId)
+                || projectMemberRepository.existsByUserIdAndProjectId(assigneeId, projectId);
+            if (!isAssigneeMember) {
+                throw new IllegalArgumentException("Assigned user is not a member of this project.");
+            }
+
+            task.setAssignedTo(assignee);
+        }
+
         taskRepository.save(task);
         return new TaskDTO(task);
     }
 
     @Transactional
     public TaskDTO updateTask(UUID projectId, UUID taskId, UpdateTaskRequest request, UUID userId) {
-        projectValidationService.validateTaskOwnership(taskId, projectId, userId);
+        projectValidationService.validateTaskAccess(taskId, projectId, userId, ProjectPermission.TASK_EDIT);
+
         Task task = taskRepository.findById(taskId)
-            .orElseThrow(() -> new NotFoundException("Task not found"));
+            .orElseThrow(() -> new NotFoundException(TASK_NOT_FOUND));
 
         task.setTitle(request.title());
         task.setDescription(request.description());
@@ -78,13 +110,13 @@ public class TaskService {
 
     @Transactional
     public void deleteTask(UUID projectId, UUID taskId, UUID userId) {
-        projectValidationService.validateTaskOwnership(taskId, projectId, userId);
+        projectValidationService.validateTaskAccess(taskId, projectId, userId, ProjectPermission.TASK_DELETE);
         Task task = taskRepository.findById(taskId)
-            .orElseThrow(() -> new NotFoundException("Task not found"));
+            .orElseThrow(() -> new NotFoundException(TASK_NOT_FOUND));
         taskRepository.delete(task);
     }
 
-    private TaskStatus resolveStatus (String status) {
+    private TaskStatus resolveStatus(String status) {
         if (status.equalsIgnoreCase("DONE")) {
             return TaskStatus.DONE;
         } else if (status.equalsIgnoreCase("IN_PROGRESS")) {

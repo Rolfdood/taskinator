@@ -7,9 +7,11 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.taskinator.taskinator.application.ProjectValidationService;
+import com.taskinator.taskinator.domain.ProjectPermission;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.User;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
+import com.taskinator.taskinator.domain.repository.ProjectRoleRepository;
 import com.taskinator.taskinator.domain.repository.UserRepository;
 import com.taskinator.taskinator.exception.NotFoundException;
 import com.taskinator.taskinator.web.dto.CreateProjectRequest;
@@ -34,6 +36,9 @@ class ProjectServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private ProjectRoleRepository projectRoleRepository;
+
+    @Mock
     private ProjectValidationService projectValidationService;
 
     @InjectMocks
@@ -46,13 +51,15 @@ class ProjectServiceTest {
         UUID projectId = UUID.randomUUID();
         Project project = mock(Project.class);
 
-        when(projectRepository.findAllByUserId(userId)).thenReturn(List.of(project));
+        when(projectRepository.findAllAccessibleByUserId(userId)).thenReturn(List.of(project));
         when(project.getId()).thenReturn(projectId);
         when(project.getName()).thenReturn("Project 1");
         when(project.getDescription()).thenReturn("Project Description 1");
         when(project.getUser()).thenReturn(user);
         when(user.getId()).thenReturn(userId);
         when(project.getTasks()).thenReturn(Collections.emptyList());
+        when(project.getRoles()).thenReturn(Collections.emptyList());
+        when(project.getMembers()).thenReturn(Collections.emptyList());
 
         List<ProjectDTO> result = projectService.findAllProjects(userId);
 
@@ -85,6 +92,8 @@ class ProjectServiceTest {
         when(project.getUser()).thenReturn(user);
         when(user.getId()).thenReturn(userId);
         when(project.getTasks()).thenReturn(Collections.emptyList());
+        when(project.getRoles()).thenReturn(Collections.emptyList());
+        when(project.getMembers()).thenReturn(Collections.emptyList());
 
         List<ProjectDTO> result = projectService.findProjectsByName(projectName, userId);
 
@@ -115,6 +124,9 @@ class ProjectServiceTest {
 
         assertEquals("Project 1", result.name());
         assertEquals("Project Description 1", result.description());
+        assertEquals(2, result.roles().size());
+        assertEquals("Manager", result.roles().get(0).name());
+        assertEquals("Member", result.roles().get(1).name());
     }
 
     @Test
@@ -143,6 +155,7 @@ class ProjectServiceTest {
 
         ProjectDTO result = projectService.updateProject(projectId, userId, request);
 
+        verify(projectValidationService).validatePermission(projectId, userId, ProjectPermission.PROJECT_EDIT);
         assertEquals("Project 2", result.name());
         assertEquals("Project Description 2", result.description());
     }
@@ -154,6 +167,7 @@ class ProjectServiceTest {
 
         projectService.deleteProject(projectId, userId);
 
+        verify(projectValidationService).validatePermission(projectId, userId, ProjectPermission.PROJECT_DELETE);
         verify(projectRepository).deleteById(projectId);
     }
 }

@@ -1,23 +1,15 @@
 package com.taskinator.taskinator.web.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
-public record CreateTaskRequest (
+public record AddMemberRequest(
     @NotBlank
-    String title,
-
-    String description,
+    @Email
+    String email,
 
     @NotNull
-    String status,
-
-    LocalDateTime dueDate,
-
-    UUID assignedTo
-
-){
-
-}
+    UUID roleId
+) {}

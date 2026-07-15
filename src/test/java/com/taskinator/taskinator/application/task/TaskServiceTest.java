@@ -9,11 +9,15 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.taskinator.taskinator.application.ProjectValidationService;
+import com.taskinator.taskinator.domain.ProjectPermission;
 import com.taskinator.taskinator.domain.TaskStatus;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.Task;
+import com.taskinator.taskinator.domain.entity.User;
+import com.taskinator.taskinator.domain.repository.ProjectMemberRepository;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.TaskRepository;
+import com.taskinator.taskinator.domain.repository.UserRepository;
 import com.taskinator.taskinator.exception.NotFoundException;
 import com.taskinator.taskinator.web.dto.CreateTaskRequest;
 import com.taskinator.taskinator.web.dto.UpdateTaskRequest;
@@ -38,6 +42,12 @@ class TaskServiceTest {
     private ProjectRepository projectRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private ProjectMemberRepository projectMemberRepository;
+
+    @Mock
     private ProjectValidationService projectValidationService;
 
     @InjectMocks
@@ -54,18 +64,18 @@ class TaskServiceTest {
 
         List<TaskDTO> result = taskService.findAllByProject(projectId, userId);
 
-        verify(projectValidationService).validateProjectBelongsToUser(projectId, userId);
+        verify(projectValidationService).validatePermission(projectId, userId, ProjectPermission.PROJECT_VIEW);
         assertEquals(1, result.size());
         assertEquals("Task 1", result.get(0).getTitle());
     }
 
     @Test
-    void findAllByProject_projectNotOwned_throwsNotFoundException() {
+    void findAllByProject_noPermission_throwsNotFoundException() {
         UUID projectId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
 
         doThrow(new NotFoundException("Project not found."))
-            .when(projectValidationService).validateProjectBelongsToUser(projectId, userId);
+            .when(projectValidationService).validatePermission(projectId, userId, ProjectPermission.PROJECT_VIEW);
 
         assertThrows(NotFoundException.class,
             () -> taskService.findAllByProject(projectId, userId));
@@ -83,7 +93,7 @@ class TaskServiceTest {
 
         TaskDTO result = taskService.findTaskById(projectId, taskId, userId);
 
-        verify(projectValidationService).validateTaskOwnership(taskId, projectId, userId);
+        verify(projectValidationService).validateTaskAccess(taskId, projectId, userId, ProjectPermission.PROJECT_VIEW);
         assertNotNull(result);
         assertEquals("Task 1", result.getTitle());
     }
@@ -116,7 +126,7 @@ class TaskServiceTest {
 
         TaskDTO result = taskService.createTask(projectId, request, userId);
 
-        verify(projectValidationService).validateProjectBelongsToUser(projectId, userId);
+        verify(projectValidationService).validatePermission(projectId, userId, ProjectPermission.TASK_CREATE);
         verify(taskRepository).save(org.mockito.ArgumentMatchers.any(Task.class));
         assertEquals("New Task", result.getTitle());
         assertEquals("Task description", result.getDescription());
@@ -133,6 +143,28 @@ class TaskServiceTest {
 
         assertThrows(NotFoundException.class,
             () -> taskService.createTask(projectId, mock(CreateTaskRequest.class), userId));
+    }
+
+    @Test
+    void createTask_assigneeNotMember_throwsIllegalArgumentException() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID assigneeId = UUID.randomUUID();
+        Project project = mock(Project.class);
+
+        CreateTaskRequest request = mock(CreateTaskRequest.class);
+        when(request.title()).thenReturn("New Task");
+        when(request.description()).thenReturn("Task description");
+        when(request.status()).thenReturn("TODO");
+        when(request.dueDate()).thenReturn(null);
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(userRepository.findById(assigneeId)).thenReturn(Optional.of(mock(User.class)));
+        when(projectRepository.existsByIdAndUserId(projectId, assigneeId)).thenReturn(false);
+        when(projectMemberRepository.existsByUserIdAndProjectId(assigneeId, projectId)).thenReturn(false);
+
+        assertThrows(IllegalArgumentException.class,
+            () -> taskService.createTask(projectId, request, userId, assigneeId));
     }
 
     @Test
@@ -153,7 +185,7 @@ class TaskServiceTest {
 
         TaskDTO result = taskService.updateTask(projectId, taskId, request, userId);
 
-        verify(projectValidationService).validateTaskOwnership(taskId, projectId, userId);
+        verify(projectValidationService).validateTaskAccess(taskId, projectId, userId, ProjectPermission.TASK_EDIT);
         verify(taskRepository).save(task);
         assertEquals("Updated Title", result.getTitle());
         assertEquals("Updated Desc", result.getDescription());
@@ -184,7 +216,7 @@ class TaskServiceTest {
 
         taskService.deleteTask(projectId, taskId, userId);
 
-        verify(projectValidationService).validateTaskOwnership(taskId, projectId, userId);
+        verify(projectValidationService).validateTaskAccess(taskId, projectId, userId, ProjectPermission.TASK_DELETE);
         verify(taskRepository).delete(task);
     }
 
