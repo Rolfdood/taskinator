@@ -1,14 +1,18 @@
 package com.taskinator.taskinator.application.project;
 
 import com.taskinator.taskinator.application.ProjectValidationService;
-import com.taskinator.taskinator.exception.NotFoundException;
+import com.taskinator.taskinator.domain.ProjectPermission;
 import com.taskinator.taskinator.domain.entity.Project;
+import com.taskinator.taskinator.domain.entity.ProjectRole;
 import com.taskinator.taskinator.domain.entity.User;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
+import com.taskinator.taskinator.domain.repository.ProjectRoleRepository;
 import com.taskinator.taskinator.domain.repository.UserRepository;
+import com.taskinator.taskinator.exception.NotFoundException;
 import com.taskinator.taskinator.web.dto.CreateProjectRequest;
 import com.taskinator.taskinator.web.dto.UpdateProjectRequest;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,17 +22,20 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final ProjectRoleRepository projectRoleRepository;
     private final ProjectValidationService projectValidationService;
 
     public ProjectService(ProjectRepository projectRepository, UserRepository userRepository,
+        ProjectRoleRepository projectRoleRepository,
         ProjectValidationService projectValidationService) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
+        this.projectRoleRepository = projectRoleRepository;
         this.projectValidationService = projectValidationService;
     }
 
     public List<ProjectDTO> findAllProjects(UUID userId) {
-        return projectRepository.findAllByUserId(userId)
+        return projectRepository.findAllAccessibleByUserId(userId)
             .stream()
             .map(ProjectDTO::new)
             .toList();
@@ -50,12 +57,22 @@ public class ProjectService {
         Project project = new Project(request.name(), request.description(), user);
         projectRepository.save(project);
 
+        ProjectRole managerRole = new ProjectRole("Manager", project, Set.of(ProjectPermission.values()));
+        ProjectRole memberRole = new ProjectRole("Member", project, Set.of(ProjectPermission.PROJECT_VIEW,
+            ProjectPermission.TASK_CREATE, ProjectPermission.TASK_EDIT, ProjectPermission.TASK_DELETE));
+
+        projectRoleRepository.save(managerRole);
+        projectRoleRepository.save(memberRole);
+
+        project.getRoles().add(managerRole);
+        project.getRoles().add(memberRole);
+
         return new ProjectDTO(project);
     }
 
     @Transactional
     public ProjectDTO updateProject(UUID projectId, UUID userId, UpdateProjectRequest request) {
-        projectValidationService.validateProjectBelongsToUser(projectId, userId);
+        projectValidationService.validatePermission(projectId, userId, ProjectPermission.PROJECT_EDIT);
 
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new NotFoundException("Project not found"));
@@ -69,7 +86,7 @@ public class ProjectService {
 
     @Transactional
     public void deleteProject(UUID projectId, UUID userId) {
-        projectValidationService.validateProjectBelongsToUser(projectId, userId);
+        projectValidationService.validatePermission(projectId, userId, ProjectPermission.PROJECT_DELETE);
         projectRepository.deleteById(projectId);
     }
 }
