@@ -6,6 +6,7 @@ import com.taskinator.taskinator.domain.TaskStatus;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.Task;
 import com.taskinator.taskinator.domain.entity.User;
+import com.taskinator.taskinator.domain.repository.ProjectMemberRepository;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.TaskRepository;
 import com.taskinator.taskinator.domain.repository.UserRepository;
@@ -23,16 +24,19 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final ProjectValidationService projectValidationService;
 
     static final String TASK_NOT_FOUND = "Task not found";
 
     public TaskService(TaskRepository taskRepository, ProjectRepository projectRepository,
         UserRepository userRepository,
+        ProjectMemberRepository projectMemberRepository,
         ProjectValidationService projectValidationService) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
+        this.projectMemberRepository = projectMemberRepository;
         this.projectValidationService = projectValidationService;
     }
 
@@ -74,6 +78,13 @@ public class TaskService {
         if (assigneeId != null) {
             User assignee = userRepository.findById(assigneeId)
                 .orElseThrow(() -> new NotFoundException("Assigned user not found"));
+
+            boolean isAssigneeMember = projectRepository.existsByIdAndUserId(projectId, assigneeId)
+                || projectMemberRepository.existsByUserIdAndProjectId(assigneeId, projectId);
+            if (!isAssigneeMember) {
+                throw new IllegalArgumentException("Assigned user is not a member of this project.");
+            }
+
             task.setAssignedTo(assignee);
         }
 

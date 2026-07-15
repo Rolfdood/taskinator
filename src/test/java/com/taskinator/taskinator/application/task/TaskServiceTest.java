@@ -13,6 +13,8 @@ import com.taskinator.taskinator.domain.ProjectPermission;
 import com.taskinator.taskinator.domain.TaskStatus;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.Task;
+import com.taskinator.taskinator.domain.entity.User;
+import com.taskinator.taskinator.domain.repository.ProjectMemberRepository;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.TaskRepository;
 import com.taskinator.taskinator.domain.repository.UserRepository;
@@ -41,6 +43,9 @@ class TaskServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private ProjectMemberRepository projectMemberRepository;
 
     @Mock
     private ProjectValidationService projectValidationService;
@@ -138,6 +143,28 @@ class TaskServiceTest {
 
         assertThrows(NotFoundException.class,
             () -> taskService.createTask(projectId, mock(CreateTaskRequest.class), userId));
+    }
+
+    @Test
+    void createTask_assigneeNotMember_throwsIllegalArgumentException() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID assigneeId = UUID.randomUUID();
+        Project project = mock(Project.class);
+
+        CreateTaskRequest request = mock(CreateTaskRequest.class);
+        when(request.title()).thenReturn("New Task");
+        when(request.description()).thenReturn("Task description");
+        when(request.status()).thenReturn("TODO");
+        when(request.dueDate()).thenReturn(null);
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(userRepository.findById(assigneeId)).thenReturn(Optional.of(mock(User.class)));
+        when(projectRepository.existsByIdAndUserId(projectId, assigneeId)).thenReturn(false);
+        when(projectMemberRepository.existsByUserIdAndProjectId(assigneeId, projectId)).thenReturn(false);
+
+        assertThrows(IllegalArgumentException.class,
+            () -> taskService.createTask(projectId, request, userId, assigneeId));
     }
 
     @Test

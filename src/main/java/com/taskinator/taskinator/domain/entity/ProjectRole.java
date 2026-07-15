@@ -29,7 +29,7 @@ public class ProjectRole {
         name = "project_role_permissions",
         joinColumns = @JoinColumn(name = "role_id")
     )
-    @Column(name = "permission", nullable = false)
+    @Column(name = "permission", nullable = false, columnDefinition = "VARCHAR(50)")
     @Enumerated(EnumType.STRING)
     private Set<ProjectPermission> permissions = new HashSet<>();
 

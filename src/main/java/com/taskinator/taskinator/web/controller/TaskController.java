@@ -44,7 +44,7 @@ public class TaskController {
         @Valid @RequestBody CreateTaskRequest request,
         @CurrentUser CurrentUserDetails currentUser) {
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(taskService.createTask(projectId, request, currentUser.id()));
+            .body(taskService.createTask(projectId, request, currentUser.id(), request.assignedTo()));
     }
 
     @PutMapping("/{taskId}")
