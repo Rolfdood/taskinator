@@ -7,6 +7,7 @@ import com.taskinator.taskinator.web.dto.UpdateProjectRequest;
 import org.junit.jupiter.api.Test;
 
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -65,7 +66,10 @@ class ProjectControllerIT extends AbstractDBUnitTest {
                 .content(objectMapper.writeValueAsString(request)))
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.name").value("Project 2"))
-            .andExpect(jsonPath("$.userId").exists());
+            .andExpect(jsonPath("$.userId").exists())
+            .andExpect(jsonPath("$.createdAt").value(notNullValue()))
+            .andExpect(jsonPath("$.roles[0].createdAt").value(notNullValue()))
+            .andExpect(jsonPath("$.roles[1].createdAt").value(notNullValue()));
     }
 
     @Test

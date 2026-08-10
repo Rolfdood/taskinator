@@ -34,6 +34,7 @@ public class ProjectService {
         this.projectValidationService = projectValidationService;
     }
 
+    @Transactional(readOnly = true)
     public List<ProjectDTO> findAllProjects(UUID userId) {
         return projectRepository.findAllAccessibleByUserId(userId)
             .stream()
@@ -41,6 +42,7 @@ public class ProjectService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<ProjectDTO> findProjectsByName(String name, UUID userId) {
         List<Project> projects = projectRepository.findAllByNameAndUserId(name, userId);
         if (projects.isEmpty()) {

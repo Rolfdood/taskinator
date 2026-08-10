@@ -45,6 +45,11 @@ public class Project {
 
     protected Project() {}
 
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
+
     public UUID getId() {
         return id;
     }

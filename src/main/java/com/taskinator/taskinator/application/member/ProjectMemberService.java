@@ -41,6 +41,7 @@ public class ProjectMemberService {
         this.projectValidationService = projectValidationService;
     }
 
+    @Transactional(readOnly = true)
     public List<ProjectMemberDTO> listMembers(UUID projectId, UUID userId) {
         projectValidationService.validatePermission(projectId, userId, ProjectPermission.PROJECT_VIEW);
         return projectMemberRepository.findAllByProjectId(projectId)

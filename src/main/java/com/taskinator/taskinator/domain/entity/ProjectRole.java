@@ -6,7 +6,6 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import org.hibernate.annotations.CreationTimestamp;
 
 @Entity
 @Table(name = "project_roles")
@@ -33,7 +32,6 @@ public class ProjectRole {
     @Enumerated(EnumType.STRING)
     private Set<ProjectPermission> permissions = new HashSet<>();
 
-    @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
@@ -44,6 +42,11 @@ public class ProjectRole {
     }
 
     protected ProjectRole() {}
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 
     public UUID getId() {
         return id;

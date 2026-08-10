@@ -40,6 +40,7 @@ public class TaskService {
         this.projectValidationService = projectValidationService;
     }
 
+    @Transactional(readOnly = true)
     public List<TaskDTO> findAllByProject(UUID projectId, UUID userId) {
         projectValidationService.validatePermission(projectId, userId, ProjectPermission.PROJECT_VIEW);
         return taskRepository.findAllByProjectId(projectId)
@@ -48,6 +49,7 @@ public class TaskService {
             .toList();
     }
 
+    @Transactional(readOnly = true)
     public TaskDTO findTaskById(UUID projectId, UUID taskId, UUID userId) {
         projectValidationService.validateTaskAccess(taskId, projectId, userId, ProjectPermission.PROJECT_VIEW);
         Task task = taskRepository.findById(taskId)
