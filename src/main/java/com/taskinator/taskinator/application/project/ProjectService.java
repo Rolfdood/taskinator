@@ -44,10 +44,9 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public List<ProjectDTO> findProjectsByName(String name, UUID userId) {
-        List<Project> projects = projectRepository.findAllByNameAndUserId(name, userId);
-        if (projects.isEmpty()) {
-            throw new NotFoundException("Project not found");
-        }
+        List<Project> projects = name == null || name.isBlank()
+            ? projectRepository.findAllAccessibleByUserId(userId)
+            : projectRepository.findAllAccessibleByNamePrefix(name, userId);
         return projects.stream().map(ProjectDTO::new).toList();
     }
 

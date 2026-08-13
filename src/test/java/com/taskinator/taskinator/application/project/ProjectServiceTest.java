@@ -68,13 +68,15 @@ class ProjectServiceTest {
 
 
     @Test
-    void findProjectsByName_projectsNotFound_throwsNotFoundException() {
+    void findProjectsByName_projectsNotFound_returnsEmptyList() {
         String projectName = "Project 1";
         UUID userId = UUID.randomUUID();
 
-        when(projectRepository.findAllByNameAndUserId(projectName, userId)).thenReturn(List.of());
+        when(projectRepository.findAllAccessibleByNamePrefix(projectName, userId)).thenReturn(List.of());
 
-        assertThrows(NotFoundException.class, () -> projectService.findProjectsByName(projectName, userId));
+        List<ProjectDTO> result = projectService.findProjectsByName(projectName, userId);
+
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -85,7 +87,7 @@ class ProjectServiceTest {
         UUID projectId = UUID.randomUUID();
         Project project = mock(Project.class);
 
-        when(projectRepository.findAllByNameAndUserId(projectName, userId)).thenReturn(List.of(project));
+        when(projectRepository.findAllAccessibleByNamePrefix(projectName, userId)).thenReturn(List.of(project));
         when(project.getId()).thenReturn(projectId);
         when(project.getName()).thenReturn(projectName);
         when(project.getDescription()).thenReturn("Project Description 1");
@@ -96,6 +98,28 @@ class ProjectServiceTest {
         when(project.getMembers()).thenReturn(Collections.emptyList());
 
         List<ProjectDTO> result = projectService.findProjectsByName(projectName, userId);
+
+        assertEquals(projectId, result.get(0).id());
+    }
+
+    @Test
+    void findProjectsByName_nameBlank_returnsAllAccessibleProjects() {
+        User user = mock(User.class);
+        UUID userId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+        Project project = mock(Project.class);
+
+        when(projectRepository.findAllAccessibleByUserId(userId)).thenReturn(List.of(project));
+        when(project.getId()).thenReturn(projectId);
+        when(project.getName()).thenReturn("Project 1");
+        when(project.getDescription()).thenReturn("Project Description 1");
+        when(project.getUser()).thenReturn(user);
+        when(user.getId()).thenReturn(userId);
+        when(project.getTasks()).thenReturn(Collections.emptyList());
+        when(project.getRoles()).thenReturn(Collections.emptyList());
+        when(project.getMembers()).thenReturn(Collections.emptyList());
+
+        List<ProjectDTO> result = projectService.findProjectsByName("", userId);
 
         assertEquals(projectId, result.get(0).id());
     }

@@ -33,25 +33,53 @@ class ProjectControllerIT extends AbstractDBUnitTest {
 
     @Test
     @DataSet(value = Datasets.PROJECTS, cleanBefore = true)
-    void findProjectsByName_shouldReturnMatchingProjects_whenNameMatches() throws Exception {
+    void findProjectsByName_shouldReturnMatchingProjects_whenPrefixMatches() throws Exception {
         String token = loginAndGetAccessToken(EXISTING_EMAIL, EXISTING_PASSWORD);
 
         mockMvc.perform(get("/api/v1/projects/search")
-                .param("name", "Project 1")
+                .param("name", "Pro")
                 .header(AUTHORIZATION, "Bearer " + token))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$", hasSize(1)));
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].name").value("Project 1"));
     }
 
     @Test
     @DataSet(value = Datasets.PROJECTS, cleanBefore = true)
-    void findProjectsByName_shouldReturnNotFound_whenNoMatch() throws Exception {
+    void findProjectsByName_shouldBeCaseInsensitive() throws Exception {
+        String token = loginAndGetAccessToken(EXISTING_EMAIL, EXISTING_PASSWORD);
+
+        mockMvc.perform(get("/api/v1/projects/search")
+                .param("name", "pro")
+                .header(AUTHORIZATION, "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].name").value("Project 1"));
+    }
+
+    @Test
+    @DataSet(value = Datasets.PROJECTS, cleanBefore = true)
+    void findProjectsByName_shouldReturnEmptyList_whenNoMatch() throws Exception {
         String token = loginAndGetAccessToken(EXISTING_EMAIL, EXISTING_PASSWORD);
 
         mockMvc.perform(get("/api/v1/projects/search")
                 .param("name", "Nonexistent Project")
                 .header(AUTHORIZATION, "Bearer " + token))
-            .andExpect(status().isNotFound());
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    @Test
+    @DataSet(value = Datasets.PROJECTS, cleanBefore = true)
+    void findProjectsByName_shouldReturnAllAccessibleProjects_whenNameIsBlank() throws Exception {
+        String token = loginAndGetAccessToken(EXISTING_EMAIL, EXISTING_PASSWORD);
+
+        mockMvc.perform(get("/api/v1/projects/search")
+                .param("name", "")
+                .header(AUTHORIZATION, "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$", hasSize(1)))
+            .andExpect(jsonPath("$[0].name").value("Project 1"));
     }
 
     @Test
