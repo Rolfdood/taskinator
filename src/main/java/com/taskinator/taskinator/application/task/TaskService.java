@@ -119,12 +119,14 @@ public class TaskService {
     }
 
     private TaskStatus resolveStatus(String status) {
-        if (status.equalsIgnoreCase("DONE")) {
-            return TaskStatus.DONE;
-        } else if (status.equalsIgnoreCase("IN_PROGRESS")) {
-            return TaskStatus.IN_PROGRESS;
-        } else {
-            return TaskStatus.TODO;
+        if (status == null) {
+            throw new IllegalArgumentException("Task status is required");
         }
+        return switch (status.toUpperCase()) {
+            case "TODO" -> TaskStatus.TODO;
+            case "IN_PROGRESS" -> TaskStatus.IN_PROGRESS;
+            case "DONE" -> TaskStatus.DONE;
+            default -> throw new IllegalArgumentException("Invalid task status: " + status);
+        };
     }
 }

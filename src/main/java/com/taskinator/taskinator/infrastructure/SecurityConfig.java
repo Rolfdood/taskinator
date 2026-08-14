@@ -3,6 +3,7 @@ package com.taskinator.taskinator.infrastructure;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.taskinator.taskinator.application.auth.CustomUserDetailsService;
 import com.taskinator.taskinator.infrastructure.security.JwtAuthenticationFilter;
+import com.taskinator.taskinator.infrastructure.security.RateLimitingFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import org.springframework.context.annotation.Bean;
@@ -22,6 +23,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -29,16 +31,22 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RateLimitingFilter rateLimitingFilter;
     private final CustomUserDetailsService userDetailsService;
     private final ObjectMapper objectMapper;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     public SecurityConfig(
         JwtAuthenticationFilter jwtAuthenticationFilter,
+        RateLimitingFilter rateLimitingFilter,
         CustomUserDetailsService userDetailsService,
-        ObjectMapper objectMapper) {
+        ObjectMapper objectMapper,
+        CorsConfigurationSource corsConfigurationSource) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.rateLimitingFilter = rateLimitingFilter;
         this.userDetailsService = userDetailsService;
         this.objectMapper = objectMapper;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
@@ -63,13 +71,17 @@ public class SecurityConfig {
 
             http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session ->
                     session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                     .requestMatchers("/api/v1/auth/**").permitAll()
+                    .requestMatchers("/actuator/**").denyAll()
                     .anyRequest().authenticated()
                 )
                 .authenticationProvider(authProvider)
+                .addFilterBefore(rateLimitingFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> ex
                     .authenticationEntryPoint((request, response, authException) ->

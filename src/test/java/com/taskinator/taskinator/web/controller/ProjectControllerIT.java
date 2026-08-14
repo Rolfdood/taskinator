@@ -20,6 +20,12 @@ class ProjectControllerIT extends AbstractDBUnitTest {
     private static final String SEEDED_PROJECT_ID = "b2c3d4e5-0000-4000-8000-000000000001";
 
     @Test
+    void findAllProjects_shouldReturnUnauthorized_whenNotAuthenticated() throws Exception {
+        mockMvc.perform(get("/api/v1/projects"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     @DataSet(value = Datasets.PROJECTS, cleanBefore = true)
     void findAllProjects_shouldReturnProjects_whenProjectsExist() throws Exception {
         String token = loginAndGetAccessToken(EXISTING_EMAIL, EXISTING_PASSWORD);

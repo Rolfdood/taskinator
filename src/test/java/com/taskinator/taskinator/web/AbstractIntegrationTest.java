@@ -61,6 +61,12 @@ public abstract class AbstractIntegrationTest {
         return extractAccessToken(result);
     }
 
+    protected String extractRefreshTokenCookie(MvcResult result) {
+        return result.getResponse().getCookie("refreshToken") != null
+            ? result.getResponse().getCookie("refreshToken").getValue()
+            : null;
+    }
+
     private String extractAccessToken(MvcResult result) throws Exception {
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
         return json.get("accessToken").asText();
