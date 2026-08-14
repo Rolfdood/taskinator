@@ -3,8 +3,10 @@ package com.taskinator.taskinator.application.project;
 import com.taskinator.taskinator.application.ProjectValidationService;
 import com.taskinator.taskinator.domain.ProjectPermission;
 import com.taskinator.taskinator.domain.entity.Project;
+import com.taskinator.taskinator.domain.entity.ProjectMember;
 import com.taskinator.taskinator.domain.entity.ProjectRole;
 import com.taskinator.taskinator.domain.entity.User;
+import com.taskinator.taskinator.domain.repository.ProjectMemberRepository;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.ProjectRoleRepository;
 import com.taskinator.taskinator.domain.repository.UserRepository;
@@ -23,14 +25,17 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
     private final ProjectRoleRepository projectRoleRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final ProjectValidationService projectValidationService;
 
     public ProjectService(ProjectRepository projectRepository, UserRepository userRepository,
         ProjectRoleRepository projectRoleRepository,
+        ProjectMemberRepository projectMemberRepository,
         ProjectValidationService projectValidationService) {
         this.projectRepository = projectRepository;
         this.userRepository = userRepository;
         this.projectRoleRepository = projectRoleRepository;
+        this.projectMemberRepository = projectMemberRepository;
         this.projectValidationService = projectValidationService;
     }
 
@@ -67,6 +72,10 @@ public class ProjectService {
 
         project.getRoles().add(managerRole);
         project.getRoles().add(memberRole);
+
+        ProjectMember creatorMember = new ProjectMember(user, project, managerRole);
+        projectMemberRepository.save(creatorMember);
+        project.getMembers().add(creatorMember);
 
         return new ProjectDTO(project);
     }

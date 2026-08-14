@@ -8,8 +8,10 @@ import static org.mockito.Mockito.when;
 
 import com.taskinator.taskinator.application.ProjectValidationService;
 import com.taskinator.taskinator.domain.ProjectPermission;
+import com.taskinator.taskinator.domain.entity.Name;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.User;
+import com.taskinator.taskinator.domain.repository.ProjectMemberRepository;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.ProjectRoleRepository;
 import com.taskinator.taskinator.domain.repository.UserRepository;
@@ -37,6 +39,9 @@ class ProjectServiceTest {
 
     @Mock
     private ProjectRoleRepository projectRoleRepository;
+
+    @Mock
+    private ProjectMemberRepository projectMemberRepository;
 
     @Mock
     private ProjectValidationService projectValidationService;
@@ -139,8 +144,13 @@ class ProjectServiceTest {
         CreateProjectRequest request = mock(CreateProjectRequest.class);
         UUID userId = UUID.randomUUID();
         User user = mock(User.class);
+        Name name = mock(Name.class);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(user.getId()).thenReturn(userId);
+        when(user.getName()).thenReturn(name);
+        when(name.getFirstName()).thenReturn("Jane");
+        when(name.getLastName()).thenReturn("Doe");
         when(request.name()).thenReturn("Project 1");
         when(request.description()).thenReturn("Project Description 1");
 
@@ -151,6 +161,9 @@ class ProjectServiceTest {
         assertEquals(2, result.roles().size());
         assertEquals("Manager", result.roles().get(0).name());
         assertEquals("Member", result.roles().get(1).name());
+        assertEquals(1, result.members().size());
+        assertEquals(userId, result.members().get(0).userId());
+        assertEquals("Manager", result.members().get(0).roleName());
     }
 
     @Test

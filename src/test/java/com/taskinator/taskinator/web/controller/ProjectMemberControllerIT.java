@@ -20,7 +20,7 @@ class ProjectMemberControllerIT extends AbstractDBUnitTest {
     private static final String MEMBER_ROLE_ID = "e5f6a7b8-0000-4000-8000-000000000001";
 
     @Test
-    @DataSet(value = Datasets.ROLES, cleanBefore = true)
+    @DataSet(value = Datasets.PROJECTS, cleanBefore = true)
     void listMembers_shouldReturnEmptyList_whenNoMembers() throws Exception {
         String token = loginAndGetAccessToken(EXISTING_EMAIL, EXISTING_PASSWORD);
 

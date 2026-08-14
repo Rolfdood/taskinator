@@ -60,10 +60,6 @@ public class ProjectMemberService {
         Project project = projectRepository.findById(projectId)
             .orElseThrow(() -> new NotFoundException("Project not found."));
 
-        if (project.getUser().getId().equals(targetUser.getId())) {
-            throw new IllegalArgumentException("The project administrator cannot be added as a member.");
-        }
-
         if (projectMemberRepository.existsByUserIdAndProjectId(targetUser.getId(), projectId)) {
             throw new IllegalArgumentException("User is already a member of this project.");
         }
@@ -81,6 +77,13 @@ public class ProjectMemberService {
     public ProjectMemberDTO updateMemberRole(UUID projectId, UUID targetUserId, UUID userId, UUID roleId) {
         projectValidationService.validatePermission(projectId, userId, ProjectPermission.MEMBER_MANAGE);
 
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new NotFoundException("Project not found."));
+
+        if (project.getUser().getId().equals(targetUserId)) {
+            throw new IllegalArgumentException("The project owner's role cannot be changed.");
+        }
+
         ProjectMember member = projectMemberRepository.findByUserIdAndProjectId(targetUserId, projectId)
             .orElseThrow(() -> new NotFoundException("Member not found in this project."));
 
@@ -96,6 +99,13 @@ public class ProjectMemberService {
     @Transactional
     public void removeMember(UUID projectId, UUID targetUserId, UUID userId) {
         projectValidationService.validatePermission(projectId, userId, ProjectPermission.MEMBER_MANAGE);
+
+        Project project = projectRepository.findById(projectId)
+            .orElseThrow(() -> new NotFoundException("Project not found."));
+
+        if (project.getUser().getId().equals(targetUserId)) {
+            throw new IllegalArgumentException("The project owner cannot be removed from the project.");
+        }
 
         if (!projectMemberRepository.existsByUserIdAndProjectId(targetUserId, projectId)) {
             throw new NotFoundException("Member not found in this project.");

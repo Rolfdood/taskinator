@@ -97,7 +97,10 @@ class ProjectControllerIT extends AbstractDBUnitTest {
             .andExpect(jsonPath("$.userId").exists())
             .andExpect(jsonPath("$.createdAt").value(notNullValue()))
             .andExpect(jsonPath("$.roles[0].createdAt").value(notNullValue()))
-            .andExpect(jsonPath("$.roles[1].createdAt").value(notNullValue()));
+            .andExpect(jsonPath("$.roles[1].createdAt").value(notNullValue()))
+            .andExpect(jsonPath("$.members", hasSize(1)))
+            .andExpect(jsonPath("$.members[0].email").value(EXISTING_EMAIL))
+            .andExpect(jsonPath("$.members[0].roleName").value("Manager"));
     }
 
     @Test

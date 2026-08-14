@@ -19,6 +19,7 @@ class ProjectRoleControllerIT extends AbstractDBUnitTest {
     private static final String EXISTING_PASSWORD = "Password123!";
     private static final String SEEDED_PROJECT_ID = "b2c3d4e5-0000-4000-8000-000000000001";
     private static final String MANAGER_ROLE_ID = "d4e5f6a7-0000-4000-8000-000000000001";
+    private static final String MEMBER_ROLE_ID = "e5f6a7b8-0000-4000-8000-000000000001";
 
     @Test
     @DataSet(value = Datasets.ROLES, cleanBefore = true)
@@ -109,7 +110,7 @@ class ProjectRoleControllerIT extends AbstractDBUnitTest {
     void deleteRole_shouldDeleteRole() throws Exception {
         String token = loginAndGetAccessToken(EXISTING_EMAIL, EXISTING_PASSWORD);
 
-        mockMvc.perform(delete("/api/v1/projects/" + SEEDED_PROJECT_ID + "/roles/" + MANAGER_ROLE_ID)
+        mockMvc.perform(delete("/api/v1/projects/" + SEEDED_PROJECT_ID + "/roles/" + MEMBER_ROLE_ID)
                 .header(AUTHORIZATION, "Bearer " + token))
             .andExpect(status().isNoContent());
     }
