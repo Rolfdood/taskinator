@@ -8,8 +8,10 @@ import static org.mockito.Mockito.when;
 
 import com.taskinator.taskinator.application.ProjectValidationService;
 import com.taskinator.taskinator.domain.ProjectPermission;
+import com.taskinator.taskinator.domain.entity.Name;
 import com.taskinator.taskinator.domain.entity.Project;
 import com.taskinator.taskinator.domain.entity.User;
+import com.taskinator.taskinator.domain.repository.ProjectMemberRepository;
 import com.taskinator.taskinator.domain.repository.ProjectRepository;
 import com.taskinator.taskinator.domain.repository.ProjectRoleRepository;
 import com.taskinator.taskinator.domain.repository.UserRepository;
@@ -37,6 +39,9 @@ class ProjectServiceTest {
 
     @Mock
     private ProjectRoleRepository projectRoleRepository;
+
+    @Mock
+    private ProjectMemberRepository projectMemberRepository;
 
     @Mock
     private ProjectValidationService projectValidationService;
@@ -68,13 +73,15 @@ class ProjectServiceTest {
 
 
     @Test
-    void findProjectsByName_projectsNotFound_throwsNotFoundException() {
+    void findProjectsByName_projectsNotFound_returnsEmptyList() {
         String projectName = "Project 1";
         UUID userId = UUID.randomUUID();
 
-        when(projectRepository.findAllByNameAndUserId(projectName, userId)).thenReturn(List.of());
+        when(projectRepository.findAllAccessibleByNamePrefix(projectName, userId)).thenReturn(List.of());
 
-        assertThrows(NotFoundException.class, () -> projectService.findProjectsByName(projectName, userId));
+        List<ProjectDTO> result = projectService.findProjectsByName(projectName, userId);
+
+        assertEquals(0, result.size());
     }
 
     @Test
@@ -85,7 +92,7 @@ class ProjectServiceTest {
         UUID projectId = UUID.randomUUID();
         Project project = mock(Project.class);
 
-        when(projectRepository.findAllByNameAndUserId(projectName, userId)).thenReturn(List.of(project));
+        when(projectRepository.findAllAccessibleByNamePrefix(projectName, userId)).thenReturn(List.of(project));
         when(project.getId()).thenReturn(projectId);
         when(project.getName()).thenReturn(projectName);
         when(project.getDescription()).thenReturn("Project Description 1");
@@ -96,6 +103,28 @@ class ProjectServiceTest {
         when(project.getMembers()).thenReturn(Collections.emptyList());
 
         List<ProjectDTO> result = projectService.findProjectsByName(projectName, userId);
+
+        assertEquals(projectId, result.get(0).id());
+    }
+
+    @Test
+    void findProjectsByName_nameBlank_returnsAllAccessibleProjects() {
+        User user = mock(User.class);
+        UUID userId = UUID.randomUUID();
+        UUID projectId = UUID.randomUUID();
+        Project project = mock(Project.class);
+
+        when(projectRepository.findAllAccessibleByUserId(userId)).thenReturn(List.of(project));
+        when(project.getId()).thenReturn(projectId);
+        when(project.getName()).thenReturn("Project 1");
+        when(project.getDescription()).thenReturn("Project Description 1");
+        when(project.getUser()).thenReturn(user);
+        when(user.getId()).thenReturn(userId);
+        when(project.getTasks()).thenReturn(Collections.emptyList());
+        when(project.getRoles()).thenReturn(Collections.emptyList());
+        when(project.getMembers()).thenReturn(Collections.emptyList());
+
+        List<ProjectDTO> result = projectService.findProjectsByName("", userId);
 
         assertEquals(projectId, result.get(0).id());
     }
@@ -115,8 +144,13 @@ class ProjectServiceTest {
         CreateProjectRequest request = mock(CreateProjectRequest.class);
         UUID userId = UUID.randomUUID();
         User user = mock(User.class);
+        Name name = mock(Name.class);
 
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+        when(user.getId()).thenReturn(userId);
+        when(user.getName()).thenReturn(name);
+        when(name.getFirstName()).thenReturn("Jane");
+        when(name.getLastName()).thenReturn("Doe");
         when(request.name()).thenReturn("Project 1");
         when(request.description()).thenReturn("Project Description 1");
 
@@ -127,6 +161,9 @@ class ProjectServiceTest {
         assertEquals(2, result.roles().size());
         assertEquals("Manager", result.roles().get(0).name());
         assertEquals("Member", result.roles().get(1).name());
+        assertEquals(1, result.members().size());
+        assertEquals(userId, result.members().get(0).userId());
+        assertEquals("Manager", result.members().get(0).roleName());
     }
 
     @Test

@@ -141,7 +141,7 @@ class ProjectMemberServiceTest {
     }
 
     @Test
-    void addMember_isAdmin_throwsIllegalArgumentException() {
+    void addMember_adminAlreadyMember_throwsIllegalArgumentException() {
         UUID projectId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID roleId = UUID.randomUUID();
@@ -153,6 +153,7 @@ class ProjectMemberServiceTest {
         when(userRepository.findByEmail(email)).thenReturn(Optional.of(admin));
         when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
         when(project.getUser()).thenReturn(admin);
+        when(projectMemberRepository.existsByUserIdAndProjectId(admin.getId(), projectId)).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class,
             () -> projectMemberService.addMember(projectId, userId, email, roleId));
@@ -222,8 +223,12 @@ class ProjectMemberServiceTest {
 
         ProjectRole newRole = mock(ProjectRole.class);
         User memberUser = createMockUser(targetUserId, "member@test.com", "Jane", "Doe");
+        User owner = createMockUser(UUID.randomUUID(), "owner@test.com", "Owner", "User");
         ProjectMember member = mock(ProjectMember.class);
+        Project project = mock(Project.class);
 
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(project.getUser()).thenReturn(owner);
         when(projectMemberRepository.findByUserIdAndProjectId(targetUserId, projectId))
             .thenReturn(Optional.of(member));
         when(projectRoleRepository.findByIdAndProjectId(newRoleId, projectId)).thenReturn(Optional.of(newRole));
@@ -245,7 +250,11 @@ class ProjectMemberServiceTest {
         UUID targetUserId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID roleId = UUID.randomUUID();
+        User owner = createMockUser(UUID.randomUUID(), "owner@test.com", "Owner", "User");
+        Project project = mock(Project.class);
 
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(project.getUser()).thenReturn(owner);
         when(projectMemberRepository.findByUserIdAndProjectId(targetUserId, projectId))
             .thenReturn(Optional.empty());
 
@@ -259,9 +268,12 @@ class ProjectMemberServiceTest {
         UUID targetUserId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         UUID roleId = UUID.randomUUID();
-
+        User owner = createMockUser(UUID.randomUUID(), "owner@test.com", "Owner", "User");
         ProjectMember member = mock(ProjectMember.class);
+        Project project = mock(Project.class);
 
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(project.getUser()).thenReturn(owner);
         when(projectMemberRepository.findByUserIdAndProjectId(targetUserId, projectId))
             .thenReturn(Optional.of(member));
         when(projectRoleRepository.findByIdAndProjectId(roleId, projectId)).thenReturn(Optional.empty());
@@ -271,11 +283,30 @@ class ProjectMemberServiceTest {
     }
 
     @Test
+    void updateMemberRole_owner_throwsIllegalArgumentException() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        UUID roleId = UUID.randomUUID();
+        User owner = createMockUser(UUID.randomUUID(), "owner@test.com", "Owner", "User");
+        Project project = mock(Project.class);
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(project.getUser()).thenReturn(owner);
+
+        assertThrows(IllegalArgumentException.class,
+            () -> projectMemberService.updateMemberRole(projectId, owner.getId(), userId, roleId));
+    }
+
+    @Test
     void removeMember_removesSuccessfully() {
         UUID projectId = UUID.randomUUID();
         UUID targetUserId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
+        User owner = createMockUser(UUID.randomUUID(), "owner@test.com", "Owner", "User");
+        Project project = mock(Project.class);
 
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(project.getUser()).thenReturn(owner);
         when(projectMemberRepository.existsByUserIdAndProjectId(targetUserId, projectId)).thenReturn(true);
 
         projectMemberService.removeMember(projectId, targetUserId, userId);
@@ -290,11 +321,29 @@ class ProjectMemberServiceTest {
         UUID projectId = UUID.randomUUID();
         UUID targetUserId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
+        User owner = createMockUser(UUID.randomUUID(), "owner@test.com", "Owner", "User");
+        Project project = mock(Project.class);
 
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(project.getUser()).thenReturn(owner);
         when(projectMemberRepository.existsByUserIdAndProjectId(targetUserId, projectId)).thenReturn(false);
 
         assertThrows(NotFoundException.class,
             () -> projectMemberService.removeMember(projectId, targetUserId, userId));
+    }
+
+    @Test
+    void removeMember_owner_throwsIllegalArgumentException() {
+        UUID projectId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        User owner = createMockUser(UUID.randomUUID(), "owner@test.com", "Owner", "User");
+        Project project = mock(Project.class);
+
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
+        when(project.getUser()).thenReturn(owner);
+
+        assertThrows(IllegalArgumentException.class,
+            () -> projectMemberService.removeMember(projectId, owner.getId(), userId));
     }
 
     @Test

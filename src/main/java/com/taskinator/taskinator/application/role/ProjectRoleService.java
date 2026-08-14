@@ -32,6 +32,7 @@ public class ProjectRoleService {
         this.projectValidationService = projectValidationService;
     }
 
+    @Transactional(readOnly = true)
     public List<ProjectRoleDTO> listRoles(UUID projectId, UUID userId) {
         projectValidationService.validatePermission(projectId, userId, ProjectPermission.PROJECT_VIEW);
         return projectRoleRepository.findAllByProjectId(projectId)
