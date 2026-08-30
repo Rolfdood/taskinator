@@ -106,6 +106,13 @@ public class TaskService {
         task.setStatus(resolveStatus(request.status()));
         task.setDueDate(request.dueDate() != null ? request.dueDate().toLocalDate() : null);
 
+        task.setAssignedTo(
+                request.assignedTo() == null
+                        ? null
+                        : userRepository.findById(request.assignedTo())
+                        .orElseThrow(() -> new IllegalArgumentException("Assigned user not found"))
+        );
+
         taskRepository.save(task);
         return new TaskDTO(task);
     }
