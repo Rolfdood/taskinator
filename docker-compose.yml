@@ -17,11 +17,16 @@ services:
       dockerfile: Dockerfile
     container_name: taskinator-backend
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
-      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      DB_URL: jdbc:postgresql://postgres:5432/${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_SCHEMA: ${DB_SCHEMA:-public}
+      DB_APP_ROLE: ${DB_APP_ROLE:-taskinator}
+      DB_MAX_POOL_SIZE: ${DB_MAX_POOL_SIZE:-10}
+      DB_MIN_IDLE: ${DB_MIN_IDLE:-2}
       JWT_SECRET: ${JWT_SECRET}
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:4200,http://localhost:8080}
     ports:
       - "${BACKEND_PORT}:8080"
     depends_on:
